@@ -41,6 +41,14 @@ autoconf
   --with-libc=picolibc --prefix=$PWD/install
 ```
 
+## Makefile targets
+
+| Target    | Description                                                         |
+|-----------|---------------------------------------------------------------------|
+| `all`     | Build a full toolchain with TCF scripts, aliases and nano libraries |
+| `openocd` | Build and install OpenOCD                                           |
+| `qemu`    | Build and install QEMU                                              |
+
 ## Options
 
 ### Required
