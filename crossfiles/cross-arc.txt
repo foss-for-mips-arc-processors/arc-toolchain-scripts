@@ -1,0 +1,22 @@
+[binaries]
+c = ['arc-elf32-gcc', '-nostdlib', '-mno-sdata', '-fno-delayed-branch']
+cpp = ['arc-elf32-g++', '-nostdlib', '-mno-sdata', '-fno-delayed-branch']
+ar = 'arc-elf32-ar'
+as = 'arc-elf32-as'
+nm = 'arc-elf32-nm'
+strip = 'arc-elf32-strip'
+exe_wrapper = ['env', 'arc-elf32-run']
+
+[host_machine]
+system = 'none'
+cpu_family = 'arc'
+cpu = 'arc'
+endian = 'little'
+
+[properties]
+skip_sanity_check = true
+has_link_defsym = true
+default_flash_addr = '0x00000000'
+default_flash_size = '32M'
+default_ram_addr   = '0x80000000'
+default_ram_size   = '32M'

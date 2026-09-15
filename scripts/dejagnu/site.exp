@@ -1,0 +1,18 @@
+# Make sure we look in the right place for the board description files. Add
+# our local boards directories
+if ![info exists boards_dir] {
+    set boards_dir {}
+}
+
+lappend boards_dir "[file dirname $env(DEJAGNU)]"
+lappend boards_dir "[file dirname $env(DEJAGNU)]/baseboards"
+
+# Some GCC tests requires HOST{CC,CFLAGS}, however those variables are not
+# defined by test_installed. Thus set them here.
+if ![ info exists HOSTCC ] {
+    set HOSTCC gcc
+}
+
+if ![ info exists HOSTCFLAGS ] {
+    set HOSTCFLAGS "-g -O2"
+}

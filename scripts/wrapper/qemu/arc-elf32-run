@@ -1,0 +1,20 @@
+#!/bin/bash
+
+qemu_args=()
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+	-Wq,*) qemu_args+=("$(echo "$1" | cut -d, -f2-)");;
+	*) break;;
+    esac
+    shift
+done
+
+qemu-system-arc \
+    -cpu archs,enable-exceptions=false \
+    -M arc-sim \
+    -nographic \
+    -no-reboot \
+    -monitor none \
+    -semihosting \
+    -kernel "$@"

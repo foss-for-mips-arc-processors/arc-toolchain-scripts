@@ -1,0 +1,13 @@
+/src/
+autom4te.cache
+/build/
+/build-*
+/stamps/
+config.log
+config.status
+Makefile
+scripts/wrapper/awk/awk
+scripts/wrapper/sed/sed
+.DS_Store
+*.sw?
+configure~

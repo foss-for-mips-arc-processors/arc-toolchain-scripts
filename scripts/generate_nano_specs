@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+
+import argparse
+import sys
+
+
+def parse_options(argv):
+    parser = argparse.ArgumentParser(
+        description="Generate nano.specs for a Newlib or Picolibc nano installation."
+    )
+    parser.add_argument(
+        "--triplet",
+        type=str,
+        help="A target triplet",
+    )
+    parser.add_argument(
+        "--nano-dir-name",
+        type=str,
+        help="Nano install directory name under the prefix (e.g. picolibc-nano, newlib-nano)",
+    )
+    return parser.parse_args()
+
+
+def spec_prefix(nano_dir_name):
+    return nano_dir_name.replace("-", "_")
+
+
+def main(argv):
+    options = parse_options(argv)
+    triplet = options.triplet
+    dirname = options.nano_dir_name
+
+    if not triplet:
+        print("The --triplet cannot be empty or null.", file=sys.stderr)
+        return 1
+
+    if not dirname:
+        print("The --nano-dir-name cannot be empty or null.", file=sys.stderr)
+        return 1
+
+    prefix = spec_prefix(dirname)
+
+    content = "%rename link    {0}_link\n".format(prefix)
+    content += "%rename cpp     {0}_cpp\n".format(prefix)
+    content += "%rename cc1plus {0}_cc1plus\n\n".format(prefix)
+    content += "*cpp:\n"
+    content += "-isystem %:getenv(GCC_EXEC_PREFIX ../../{}/{}/include) %({}_cpp)\n\n".format(
+        dirname, triplet, prefix
+    )
+    content += "*cc1plus:\n"
+    content += "-idirafter %:getenv(GCC_EXEC_PREFIX ../../{}/{}/include) %({}_cc1plus)\n\n".format(
+        dirname, triplet, prefix
+    )
+    content += "*link:\n"
+    content += "-L%:getenv(GCC_EXEC_PREFIX ../../{0}/{1}/lib/%M) -L%:getenv(GCC_EXEC_PREFIX ../../{0}/{1}/lib) %({2}_link)\n".format(
+        dirname, triplet, prefix
+    )
+
+    print(content)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

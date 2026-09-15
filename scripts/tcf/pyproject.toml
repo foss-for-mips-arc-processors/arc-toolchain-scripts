@@ -1,0 +1,10 @@
+[tool.black]
+target-version = ['py38']
+line-length = 150
+include = '''
+(
+  riscv64-gf-elf-tcf-gcc
+  | riscv64-gf-elf-buildlib
+  | arcgnulib.py
+)
+'''

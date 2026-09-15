@@ -1,0 +1,529 @@
+#!/usr/bin/env python3
+
+# Copyright (c) 2026, MIPS Holding, Inc. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1) Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+#
+# 2) Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# 3) Neither the name of the MIPS Holding, Inc., nor the names of its contributors
+# may be used to endorse or promote products derived from this software
+# without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+import argparse
+import logging
+import os
+import shutil
+import subprocess
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+from textwrap import dedent
+from typing import Optional, List
+
+sys.dont_write_bytecode = True
+
+import arcgnulib
+from arcgnulib import TCF, CompilerInfo
+
+logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
+
+
+@dataclass
+class BuilderConfiguration:
+    triplet: str
+    gcc_binary_path: str
+    output_dir_path: str
+    gcc_sources_git_branch: str
+    picolibc_sources_git_branch: str
+    march: str
+    mabi: str
+    mtune: str
+    mcmodel: str
+    cflags: str
+    flash_addr: str
+    flash_size: str
+    ram_addr: str
+    ram_size: str
+    nproc: int
+    gcc_sources_dir_path: Optional[str] = None
+    picolibc_sources_dir_path: Optional[str] = None
+
+
+class Builder:
+    def __init__(self, cfg: BuilderConfiguration):
+        self._cfg = cfg
+        self._output_dir_path = Path(self._cfg.output_dir_path).absolute()
+        self._install_dir_path = self._output_dir_path
+        self._toolchain_root_dir_path = Path(self._cfg.gcc_binary_path).parent.parent
+        self._include_dir_path = self._install_dir_path / self._cfg.triplet / "include"
+        self._picolibc_sources_dir_path = self._output_dir_path / "picolibc"
+        self._gcc_sources_dir_path = self._output_dir_path / "gcc"
+
+        # Get a family and a system part from a triplet. For example:
+        #     riscv64-gf-elf -> (riscv64, gf)
+        self._triplet_family, self._triplet_system = self._cfg.triplet.split("-")[:2]
+
+        # Add a toolchain's GCC binary to PATH to make it visible for configure and make.
+        self._env = os.environ.copy()
+        self._env["PATH"] = "{}:{}".format(Path(self._cfg.gcc_binary_path).parent, self._env["PATH"])
+
+    def build_picolibc(self):
+        self._output_dir_path.mkdir(exist_ok=True)
+        self._remove_directory(self._picolibc_sources_dir_path)
+
+        if self._cfg.picolibc_sources_dir_path is not None:
+            self._create_picolibc_sources_symlink()
+        else:
+            self._clone_picolibc_sources()
+
+        # Create a build directory.
+        build_dir_path = self._output_dir_path / "build-picolibc"
+        self._remove_directory(build_dir_path)
+        build_dir_path.mkdir()
+        logging.info("Creating a build directory: %s", build_dir_path)
+
+        # Generate a picolibc-cross.txt file for Meson build system.
+        cross_file_path = self._output_dir_path / "picolibc-cross.txt"
+        with open(cross_file_path, "w", encoding="utf-8") as cross_file:
+            cross_file_content = self._generate_cross_file()
+            cross_file.write(cross_file_content)
+
+        # Initialize Meson build system. Then build and install Picolibc using ninja.
+        picolibc_prefix_dir_path = self._install_dir_path / self._cfg.triplet
+        picolibc_lib_dir_path = picolibc_prefix_dir_path / "lib"
+
+        arguments = [
+            "meson",
+            "setup",
+            ".",
+            str(self._picolibc_sources_dir_path),
+            "--cross-file",
+            str(cross_file_path),
+            "-Dprefix={}".format(picolibc_prefix_dir_path),
+            "-Dlibdir={}".format(picolibc_lib_dir_path),
+            "-Dspecsdir={}".format(picolibc_lib_dir_path),
+            "-Dincludedir=include",
+            "-Dmultilib=false",
+            "-Dsystem-libc=true",
+            "-Dposix-console=true",
+            "-Dnewlib-obsolete-math=false",
+            "-Dwant-math-errno=true",
+            "-Dassert-verbose=true",
+            "-Ddebug=true",
+            "-Dwerror=true",
+            "-Doptimization=3",
+            "-Dio-c99-formats=true",
+            "-Dio-long-long=true",
+            "-Dio-long-double=true",
+            "-Dio-percent-b=true",
+            "-Dprintf-percent-n=true",
+            "-Dfast-bufio=true",
+            "-Dmb-capable=true",
+            "-Dio-wchar=true",
+        ]
+        logging.info("Configuring Picolibc library.")
+        self._run_with_log_file(arguments, build_dir_path, "picolibc-config.log")
+
+        arguments = ["ninja", "-C", str(build_dir_path)]
+        logging.info("Building Picolibc library.")
+        self._run_with_log_file(arguments, build_dir_path, "picolibc-build.log")
+
+        arguments = ["ninja", "-C", str(build_dir_path), "install"]
+        logging.info("Installing Picolibc library.")
+        self._run_with_log_file(arguments, build_dir_path, "picolibc-install.log")
+
+    def _remove_directory(self, path: str):
+        path = Path(path)
+
+        if path.is_dir() and not path.is_symlink():
+            shutil.rmtree(path)
+        else:
+            path.unlink(missing_ok=True)
+
+    def _create_picolibc_sources_symlink(self):
+        self._picolibc_sources_dir_path.symlink_to(self._cfg.picolibc_sources_dir_path, True)
+        logging.info("Creating a symbolic link to Picolibc sources: %s", self._cfg.picolibc_sources_dir_path)
+
+    def _clone_picolibc_sources(self):
+        logging.info("Cloning Picolibc repository.")
+        git_url = "https://github.com/foss-for-mips-arc-processors/picolibc"
+        arguments = ["git", "clone", "--depth", "1", "--branch", self._cfg.picolibc_sources_git_branch, git_url, str(self._picolibc_sources_dir_path)]
+        self._run_with_log_file(arguments, self._output_dir_path, "picolibc-clone.log")
+
+    def _run_with_log_file(self, arguments: List[str], build_dir_path: str, log_file_name: str):
+        log_file_path = self._output_dir_path / log_file_name
+        with open(log_file_path, "w", encoding="utf-8") as log_file:
+            command = " ".join(arguments)
+            logging.debug("Running a command:\n%s", command)
+            log_file.write(command + "\n")
+            log_file.flush()
+
+            result = subprocess.run(arguments, stdout=log_file, stderr=subprocess.STDOUT, encoding="utf-8", env=self._env, cwd=build_dir_path)
+
+            if result.returncode != 0:
+                logging.error("Command failed, check the log file: %s", log_file_path)
+                sys.exit(1)
+
+    def _generate_cross_file(self) -> str:
+        template = """\
+        [binaries]
+        c = '{triplet}-gcc'
+        ar = '{triplet}-ar'
+        as = '{triplet}-as'
+        strip = '{triplet}-strip'
+
+        [host_machine]
+        system = '{system}'
+        cpu_family = '{family}'
+        cpu = '{family}'
+        endian = 'little'
+
+        [properties]
+        c_args = [{cflags}]
+        c_link_args = [{ldflags}]
+        needs_exe_wrapper = true
+        skip_sanity_check = true
+        default_flash_addr = '{flash_addr}'
+        default_flash_size = '{flash_size}'
+        default_ram_addr = '{ram_addr}'
+        default_ram_size = '{ram_size}'
+        """
+
+        default_cflags = ["-ftls-model=local-exec", "-ffunction-sections", "-fdata-sections", "-nostdlib", "-fno-common"]
+        target_cflags = [
+            "-march={}".format(self._cfg.march),
+            "-mabi={}".format(self._cfg.mabi),
+            "-mtune={}".format(self._cfg.mtune),
+            "-mcmodel={}".format(self._cfg.mcmodel),
+        ]
+        extra_cflags = self._cfg.cflags.split()
+        cflags = default_cflags + target_cflags + extra_cflags
+        cflags_string = ", ".join(["'{}'".format(flag) for flag in cflags])
+
+        template = template.format(
+            triplet=self._cfg.triplet,
+            system=self._triplet_system,
+            family=self._triplet_family,
+            cflags=cflags_string,
+            ldflags=cflags_string,
+            flash_addr=self._cfg.flash_addr,
+            flash_size=self._cfg.flash_size,
+            ram_addr=self._cfg.ram_addr,
+            ram_size=self._cfg.ram_size,
+        )
+
+        return dedent(template)
+
+    def build_gcc(self, with_libstdcpp=True):
+        if not self._include_dir_path.exists():
+            logging.error("Picolibc include directory is not installed.")
+            sys.exit(1)
+
+        self._output_dir_path.mkdir(exist_ok=True)
+        self._remove_directory(self._gcc_sources_dir_path)
+
+        if self._cfg.gcc_sources_dir_path is not None:
+            self._create_gcc_sources_symlink()
+        else:
+            self._clone_gcc_sources()
+
+        self._download_gcc_dependencies()
+
+        # Create a build directory.
+        build_dir_path = self._output_dir_path / "build-gcc"
+        self._remove_directory(build_dir_path)
+        build_dir_path.mkdir()
+        logging.info("Creating a build directory: %s", build_dir_path)
+
+        # Now we are going to configure GCC for a random non-multilib target. We need it
+        # only for logs so it does not matter what particular target is used.
+        arguments = [
+            "../gcc/configure",
+            "--target={}".format(self._cfg.triplet),
+            "--prefix={}".format(self._install_dir_path),
+            "--with-headers={}".format(self._include_dir_path),
+            "--with-arch={}".format(self._cfg.march),
+            "--with-abi={}".format(self._cfg.mabi),
+            "--with-tune={}".format(self._cfg.mtune),
+            "--with-cmodel={}".format(self._cfg.mcmodel),
+            "--with-isa-spec=20191213",
+            "--with-newlib",
+            "--with-default-libc=picolibc",
+            "--disable-shared",
+            "--disable-threads",
+            "--enable-languages=c,c++",
+            "--enable-tls",
+            "--disable-libmudflap",
+            "--disable-libssp",
+            "--disable-libquadmath",
+            "--disable-libgomp",
+            "--disable-nls",
+            "--disable-tm-clone-registry",
+            "--disable-multilib",
+            "--disable-libstdcxx-verbose",
+            "--enable-stdio=pure",
+            "--disable-lto",
+            "--disable-plugin",
+            "CFLAGS=-O2 -g0",
+            "CXXFLAGS=-O2 -g0",
+            "CFLAGS_FOR_TARGET={}".format(self._cfg.cflags),
+            "CXXFLAGS_FOR_TARGET={}".format(self._cfg.cflags),
+        ]
+
+        logging.info("Configuring GCC.")
+        self._run_with_log_file(arguments, build_dir_path, "gcc-config.log")
+
+        # Now we are ready to build libgcc and libstdc++.
+        targets = ["all-target-libgcc"]
+        if with_libstdcpp:
+            targets.append("all-target-libstdc++-v3")
+        arguments = ["make", "-j", str(self._cfg.nproc), *targets]
+        logging.info("Building libraries.")
+        self._run_with_log_file(arguments, build_dir_path, "gcc-build.log")
+
+        # Now we are ready to build libgcc and libstdc++.
+        targets = ["install-target-libgcc"]
+        if with_libstdcpp:
+            targets.append("install-target-libstdc++-v3")
+        arguments = ["make", *targets]
+        logging.info("Installing libraries.")
+        self._run_with_log_file(arguments, build_dir_path, "gcc-install.log")
+
+        # Generate and save buildlib.specs file.
+        specs_file_content = """\
+        %rename multilib_options multilib_options_old
+        %rename multilib_matches multilib_matches_old
+        %rename multilib multilib_old
+
+        *multilib:
+        . ;
+        """
+        specs_file_content = dedent(specs_file_content)
+        specs_file_name = "buildlib.specs"
+        specs_file_path = self._output_dir_path / specs_file_name
+        logging.info("Saving %s.", specs_file_name)
+        with open(specs_file_path, "w", encoding="utf-8") as specs_file:
+            specs_file.write(specs_file_content)
+
+        logging.info("Finished building and installing libraries.")
+
+    def _create_gcc_sources_symlink(self):
+        logging.info("Creating a symbolic link to GCC sources: %s", self._cfg.gcc_sources_dir_path)
+        self._gcc_sources_dir_path.symlink_to(self._cfg.gcc_sources_dir_path, True)
+
+    def _clone_gcc_sources(self):
+        logging.info("Cloning GCC repository.")
+        git_url = "https://github.com/foss-for-mips-arc-processors/gcc"
+        arguments = ["git", "clone", "--depth", "1", "--branch", self._cfg.gcc_sources_git_branch, git_url, str(self._gcc_sources_dir_path)]
+        self._run_with_log_file(arguments, self._output_dir_path, "gcc-clone.log")
+
+    def _download_gcc_dependencies(self):
+        logging.info("Downloading GCC dependencies.")
+        arguments = ["./contrib/download_prerequisites"]
+        self._run_with_log_file(arguments, str(self._gcc_sources_dir_path), "gcc-dependencies.log")
+
+    def clean(self):
+        for tool in ["picolibc", "gcc"]:
+            build_dir_name = "build-{}".format(tool)
+            shutil.rmtree(self._output_dir_path / build_dir_name, ignore_errors=True)
+
+            sources_path = self._output_dir_path / tool
+            if sources_path.exists():
+                if not sources_path.is_symlink():
+                    shutil.rmtree(sources_path)
+                else:
+                    os.remove(sources_path)
+
+        options_file_name = "options.txt"
+        options_file_path = Path(self._output_dir_path) / options_file_name
+        with open(options_file_path, "w", encoding="utf-8") as options_file:
+            cflags = [
+                "-march={}".format(self._cfg.march),
+                "-mabi={}".format(self._cfg.mabi),
+                "-mtune={}".format(self._cfg.mtune),
+                "-mcmodel={}".format(self._cfg.mcmodel),
+                *self._cfg.cflags.split(),
+            ]
+
+            options_file.write(" ".join(cflags) + "\n")
+
+
+DEFAULT_FLASH_ADDR = "0x0"
+DEFAULT_FLASH_SIZE = "128K"
+DEFAULT_RAM_ADDR = "0x40000000"
+DEFAULT_RAM_SIZE = "128K"
+DEFAULT_CFLAGS = "-O2"
+DEFAULT_GIT_BRANCH = "arc-2026.03"
+DEFAULT_NPROC = 1
+
+
+def main():
+    script_triplet = os.path.basename(__file__).rsplit("-", maxsplit=1)[0].strip()
+    compiler_name = "{}-{}".format(script_triplet, "gcc")
+
+    try:
+        compiler_info = CompilerInfo(compiler_name)
+    except arcgnulib.CompilerInfoGCCNotFoundError as exc:
+        logging.error(str(exc))
+        return 1
+    except arcgnulib.CompilerInfoGCCExecutionError as exc:
+        logging.error(str(exc))
+        return 1
+
+    gcc_path = compiler_info.get_compiler_path()
+    gcc_triplet = compiler_info.get_compiler_triplet()
+    parser = get_parser()
+    args = parser.parse_args()
+
+    if args.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
+
+    # Process target arguments. All of them should be defined.
+    # If a TCF file is passed then get all options from the file
+    # and override them if passed explicitly.
+    march = None
+    mabi = None
+    mtune = None
+    mcmodel = None
+    cflags = args.cflags
+
+    if args.tcf is not None:
+        tcf = TCF.from_file(args.tcf)
+        march = tcf.get_march()
+        mabi = tcf.get_mabi()
+        mtune = tcf.get_mtune()
+        mcmodel = tcf.get_mcmodel()
+
+        # Extract cflags which are not related to a
+        # multilib target.
+        tcf_cflags = []
+        for flag in tcf.get_compile_options():
+            if not flag.startswith(("-march", "-mabi", "-mtune", "-mcmodel")):
+                tcf_cflags.append(flag)
+        cflags = "{} {}".format(" ".join(tcf_cflags), cflags)
+
+    if args.march is not None:
+        march = args.march
+
+    if args.mabi is not None:
+        mabi = args.mabi
+
+    if args.mtune is not None:
+        mtune = args.mtune
+
+    if None in [march, mabi, mtune]:
+        logging.error("All mandatory target options must be defined: -march, -mabi or -mtune.")
+        return 1
+
+    if args.mcmodel is not None:
+        mcmodel = args.mcmodel
+
+    # Derive a default memory model from -march
+    if mcmodel is None:
+        if march.startswith("rv32"):
+            mcmodel = "medlow"
+        else:
+            mcmodel = "medany"
+
+    logging.info("Final target options:\n-march=%s -mabi=%s -mtune=%s -mcmodel=%s", march, mabi, mtune, mcmodel)
+    logging.info("Final cflags:\n%s", cflags)
+
+    # Process sources arguments
+    if args.gcc_sources_dir_path is None:
+        gcc_sources_dir_path = None
+    else:
+        gcc_sources_dir_path = Path(args.gcc_sources_dir_path).absolute()
+
+    if args.picolibc_sources_dir_path is None:
+        picolibc_sources_dir_path = None
+    else:
+        picolibc_sources_dir_path = Path(args.picolibc_sources_dir_path).absolute()
+
+    cfg = BuilderConfiguration(
+        triplet=gcc_triplet,
+        gcc_binary_path=gcc_path,
+        output_dir_path=Path(args.output).absolute(),
+        gcc_sources_git_branch=args.gcc_sources_git_branch,
+        gcc_sources_dir_path=gcc_sources_dir_path,
+        picolibc_sources_git_branch=args.picolibc_sources_git_branch,
+        picolibc_sources_dir_path=picolibc_sources_dir_path,
+        march=march,
+        mabi=mabi,
+        mtune=mtune,
+        mcmodel=mcmodel,
+        cflags=cflags,
+        flash_addr=args.flash_addr,
+        flash_size=args.flash_size,
+        ram_addr=args.ram_addr,
+        ram_size=args.ram_size,
+        nproc=args.nproc,
+    )
+
+    builder = Builder(cfg)
+    builder.build_picolibc()
+    builder.build_gcc(with_libstdcpp=not args.no_libstdcpp)
+
+    if not args.no_clean:
+        builder.clean()
+
+    return 0
+
+
+class FixedArgumentDefaultsHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
+    def _get_help_string(self, action):
+        help = super()._get_help_string(action)
+        if action.default is None:
+            help = help.replace(r" (default: %(default)s)", "")
+        return help
+
+
+def get_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog=os.path.basename(__file__), description="Buildlib for ARC-V GNU toolchain.", formatter_class=FixedArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument("--output", "-bd", "-buildlib_dir", type=str, required=True, metavar="PATH", help="A path to output directory")
+    parser.add_argument("--tcf", "-tcf", type=str, metavar="TCF", help="A path to a TCF configuration file")
+    parser.add_argument("--march", "-march", type=str, metavar="ARCH", help="Value for -march target option")
+    parser.add_argument("--mabi", "-mabi", type=str, metavar="ABI", help="Value for -mabi target option")
+    parser.add_argument("--mtune", "-mtune", type=str, metavar="TUNE", help="Value for -mtune target option")
+    parser.add_argument("--mcmodel", "-mcmodel", type=str, metavar="CMODEL", help="Value for -mcmodel target option")
+    parser.add_argument("--cflags", type=str, default=DEFAULT_CFLAGS, metavar="CFLAGS", help="Extra target flags for GCC")
+    parser.add_argument("--no-libstdcpp", "-nocplus", action="store_true", help="Do not build libstdc++ library")
+    parser.add_argument("--gcc-sources-git-branch", type=str, default=DEFAULT_GIT_BRANCH, metavar="PATH", help="A release branch for GCC")
+    parser.add_argument("--gcc-sources-dir-path", type=str, metavar="PATH", help="A path to GCC sources (overrides --gcc-sources-git-branch)")
+    parser.add_argument("--picolibc-sources-git-branch", type=str, default=DEFAULT_GIT_BRANCH, metavar="PATH", help="A release branch for Picolibc")
+    parser.add_argument(
+        "--picolibc-sources-dir-path", type=str, metavar="PATH", help="A path to Picolibc sources (overrides --picolibc-sources-git-branch)"
+    )
+    parser.add_argument("--flash-addr", type=str, default=DEFAULT_FLASH_ADDR, metavar="ADDR", help="A default value for a flash address")
+    parser.add_argument("--flash-size", type=str, default=DEFAULT_FLASH_SIZE, metavar="SIZE", help="A default value for a flash size")
+    parser.add_argument("--ram-addr", type=str, default=DEFAULT_RAM_ADDR, metavar="ADDR", help="A default value for a ram address")
+    parser.add_argument("--ram-size", type=str, default=DEFAULT_RAM_SIZE, metavar="SIZE", help="A default value for a ram size")
+    parser.add_argument("--nproc", "-j", type=int, default=DEFAULT_NPROC, metavar="N", help="Number of threads for building")
+    parser.add_argument("--no-clean", "-noclean", action="store_true", help="Do not delete build artifacts")
+    parser.add_argument("--debug", "-v", action="store_true")
+
+    return parser
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,0 +1,834 @@
+srcdir := @abs_top_srcdir@
+builddir := @abs_top_builddir@
+INSTALL_DIR := @prefix@
+
+FAMILY := @family@
+TARGET_CPU := @target_cpu@
+TARGET_TRIPLET := @target_triplet@
+TARGET_ALIAS_NAME := @target_alias_name@
+VENDOR := @vendor@
+ENDIAN := @endian@
+OS := @with_os@
+LIBC := @libc@
+
+BINUTILS_SRCDIR := @with_binutils_src@
+GDB_SRCDIR := @with_gdb_src@
+GCC_SRCDIR := @with_gcc_src@
+NEWLIB_SRCDIR := @with_newlib_src@
+PICOLIBC_SRCDIR := @with_picolibc_src@
+DEJAGNU_SRCDIR := @with_dejagnu_src@
+OPENOCD_SRCDIR := @with_openocd_src@
+QEMU_SRCDIR := @with_qemu_src@
+
+NEED_GCC_EXTERNAL_LIBRARIES := @NEED_GCC_EXTERNAL_LIBRARIES@
+CONFIGURE_HOST := @configure_host@
+MULTILIB_FLAGS := @multilib_flags@
+MULTILIB_LIST_FLAGS := @multilib_list_flags@
+MULTILIB_GEN := @multilib_gen@
+WERROR_FLAG := @werror_flag@
+CONFIGURE_WERROR := @werror_flag@
+ENABLE_GDB := @enable_gdb@
+DEBUG_INFO := @debug_info@
+WITH_CPU := @with_cpu@
+WITH_FPU := @with_fpu@
+WITH_ARCH := @WITH_ARCH@
+WITH_ABI := @WITH_ABI@
+WITH_TUNE := @WITH_TUNE@
+WITH_ISA_SPEC := @WITH_ISA_SPEC@
+WITH_SIM := @WITH_SIM@
+
+SHELL := /bin/sh
+AWK := @GAWK@
+SED := @GSED@
+PATH := $(INSTALL_DIR)/bin:$(PATH)
+
+ifneq (@GSED@,$(shell realpath $(shell which sed) 2>/dev/null))
+PATH := $(builddir)/scripts/wrapper/sed:$(PATH)
+endif
+ifneq (@GAWK@,$(shell realpath $(shell which awk) 2>/dev/null))
+PATH := $(builddir)/scripts/wrapper/awk:$(PATH)
+endif
+
+export PATH AWK SED
+
+# Picolibc for ARCv2 does not fully support small data
+ifeq ($(LIBC),picolibc)
+ifeq ($(TARGET_CPU),arc)
+CFLAGS_FOR_TARGET_NO_SDATA := -mno-sdata
+endif
+endif
+
+# These flags are used only for building Picolibc sources
+CFLAGS_FOR_TARGET_PICOLIBC := -fno-common -ftls-model=local-exec
+
+CFLAGS_FOR_HOST := -O2 $(CFLAGS_FOR_HOST_EXTRA) @host_cflags@
+CXXFLAGS_FOR_HOST := -O2 $(CXXFLAGS_FOR_HOST_EXTRA) @host_cxxflags@
+CFLAGS_FOR_TARGET := -O2 -ffunction-sections $(CFLAGS_FOR_TARGET_NO_SDATA) $(CFLAGS_FOR_TARGET_EXTRA) $(DEBUG_INFO) @target_cflags@ @cmodel@
+CXXFLAGS_FOR_TARGET := -O2 -ffunction-sections $(CFLAGS_FOR_TARGET_NO_SDATA) $(CXXFLAGS_FOR_TARGET_EXTRA) $(DEBUG_INFO) @target_cxxflags@ @cmodel@
+ASFLAGS_FOR_TARGET := $(ASFLAGS_FOR_TARGET_EXTRA) $(DEBUG_INFO) @cmodel@
+
+ifeq ($(TARGET_TRIPLET),)
+$(error internal error: target triplet is empty)
+endif
+
+ifeq ($(OS),linux)
+$(error Linux toolchains (--with-os=linux) are not implemented yet)
+endif
+
+# Relative --src= for GCC when using the in-tree clone (needed for out-of-tree builds).
+ifeq ($(srcdir)/src/gcc,$(GCC_SRCDIR))
+mayberelsrcdir := @top_srcdir@
+gccsrcdir := $(shell case $(mayberelsrcdir) in \
+		([\\/]* | ?:[\\/]*) echo $(mayberelsrcdir)/src/gcc ;; \
+		(*) echo ../$(mayberelsrcdir)/src/gcc ;; \
+	esac)
+else
+gccsrcdir := $(abspath $(GCC_SRCDIR))
+endif
+
+.PHONY: all help clean
+
+all: stamps/build-gcc-stage2-nano-baremetal
+
+ifeq ($(ENABLE_GDB),--enable-gdb)
+all: stamps/build-gdb-baremetal
+endif
+
+help:
+	@echo "Configure with --target=arc|arc32|arc64|riscv32|riscv64"
+	@echo "OS: --with-os=baremetal (default) or linux (not implemented yet)"
+	@echo "libc: --with-libc=picolibc (baremetal default), newlib, or glibc (linux default)"
+
+#
+# Git
+#
+
+GIT_URL ?= https://github.com/foss-for-mips-arc-processors
+BINUTILS_BRANCH ?= arc-2026.09
+GDB_BRANCH ?= arc-2026.09-gdb
+GCC_BRANCH ?= arc-2026.09
+NEWLIB_BRANCH ?= arc-2026.09
+PICOLIBC_BRANCH ?= arc-2026.09
+DEJAGNU_BRANCH ?= arc-2026.09
+OPENOCD_BRANCH ?= arc-2026.09
+QEMU_BRANCH ?= ykolerov/future
+
+$(BINUTILS_SRCDIR):
+	mkdir -p $(dir $@)
+	git clone --depth 1 --single-branch --branch $(BINUTILS_BRANCH) \
+		$(GIT_URL)/binutils-gdb.git $@
+
+$(GDB_SRCDIR):
+	mkdir -p $(dir $@)
+	git clone --depth 1 --single-branch --branch $(GDB_BRANCH) \
+		$(GIT_URL)/binutils-gdb.git $@
+
+$(GCC_SRCDIR):
+	mkdir -p $(dir $@)
+	git clone --depth 1 --single-branch --branch $(GCC_BRANCH) \
+		$(GIT_URL)/gcc.git $@
+
+$(NEWLIB_SRCDIR):
+	mkdir -p $(dir $@)
+	git clone --depth 1 --single-branch --branch $(NEWLIB_BRANCH) \
+		$(GIT_URL)/newlib.git $@
+
+$(PICOLIBC_SRCDIR):
+	mkdir -p $(dir $@)
+	git clone --depth 1 --single-branch --branch $(PICOLIBC_BRANCH) \
+		$(GIT_URL)/picolibc.git $@
+
+$(DEJAGNU_SRCDIR):
+	mkdir -p $(dir $@)
+	git clone --depth 1 --single-branch --branch $(DEJAGNU_BRANCH) \
+		$(GIT_URL)/dejagnu.git $@
+
+$(QEMU_SRCDIR):
+	mkdir -p $(dir $@)
+	git clone --depth 1 --single-branch --branch $(QEMU_BRANCH) \
+		$(GIT_URL)/qemu.git $@
+
+$(OPENOCD_SRCDIR):
+	mkdir -p $(dir $@)
+	git clone --depth 1 --single-branch --branch $(OPENOCD_BRANCH) \
+		$(GIT_URL)/openocd.git $@
+
+stamps/check-write-permission:
+	mkdir -p $(INSTALL_DIR)/.test || \
+		(echo "Sorry, you don't have permission to write to" \
+		 "'$(INSTALL_DIR)'. Use --prefix to specify another path." && exit 1)
+	rm -r $(INSTALL_DIR)/.test
+	mkdir -p $(dir $@) && touch $@
+
+#
+# Aliases
+#
+
+ifeq ($(FAMILY),arc)
+define install_aliases
+	cd $(INSTALL_DIR)/bin && \
+	for file_name in $(TARGET_TRIPLET)-*; do \
+		link_name=`echo $${file_name} | sed 's/$(TARGET_TRIPLET)/$(TARGET_ALIAS_NAME)/g'`; \
+		ln -sf $${file_name} $${link_name}; \
+	done
+endef
+else ifeq ($(FAMILY),riscv)
+define install_aliases
+	cd $(INSTALL_DIR)/bin && \
+	if [ "$(VENDOR)" != unknown ]; then \
+		for file_name in $(TARGET_CPU)-$(VENDOR)-*; do \
+			link_name=`echo $${file_name} | sed 's/$(VENDOR)/unknown/g'`; \
+			ln -sf $${file_name} $${link_name}; \
+		done; \
+	fi
+endef
+else
+$(error Unsupported target!)
+endif
+
+#
+# Binutils and GDB
+#
+
+ifeq ($(FAMILY),riscv)
+CONFIGURE_BINUTILS_TARGET := $(WITH_ISA_SPEC)
+endif
+
+stamps/build-binutils-baremetal: $(BINUTILS_SRCDIR) stamps/check-write-permission
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	cd $(notdir $@) && $</configure \
+		--prefix=$(INSTALL_DIR) \
+		--target=$(TARGET_TRIPLET) \
+		$(CONFIGURE_HOST) \
+		$(CONFIGURE_WERROR) \
+		$(CONFIGURE_BINUTILS_TARGET) \
+		--enable-ld \
+		--disable-gold \
+		--disable-gprofng \
+		--disable-sim \
+		--disable-gdb \
+		--disable-nls \
+		--without-zstd \
+		$(CONFIGURE_BINUTILS_EXTRA) \
+		CFLAGS="$(CFLAGS_FOR_HOST)" \
+		CXXFLAGS="$(CXXFLAGS_FOR_HOST)"
+	$(MAKE) -C $(notdir $@)
+	$(MAKE) -C $(notdir $@) install
+	mkdir -p $(dir $@) && touch $@
+
+#
+# GDB
+#
+
+stamps/build-gdb-baremetal: $(GDB_SRCDIR) stamps/check-write-permission
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	cd $(notdir $@) && $</configure \
+		--prefix=$(INSTALL_DIR) \
+		--target=$(TARGET_TRIPLET) \
+		$(CONFIGURE_HOST) \
+		$(CONFIGURE_WERROR) \
+		$(CONFIGURE_GDB_TARGET) \
+		--enable-gdb \
+		--with-python=no \
+		--disable-sim \
+		--with-expat \
+		--without-libexpat-prefix \
+		--disable-binutils \
+		--disable-ld \
+		--disable-gas \
+		--disable-threads \
+		--disable-nls \
+		--disable-gold \
+		--disable-gprof \
+		$(CONFIGURE_GDB_EXTRA) \
+		CFLAGS="$(CFLAGS_FOR_HOST)" \
+		CXXFLAGS="$(CXXFLAGS_FOR_HOST)"
+	$(MAKE) -C $(notdir $@)
+	$(MAKE) -C $(notdir $@) install
+	$(install_aliases)
+	mkdir -p $(dir $@) && touch $@
+
+#
+# GCC
+#
+
+define gcc_download_prerequisites
+	if test -f $</contrib/download_prerequisites && test "@NEED_GCC_EXTERNAL_LIBRARIES@" = "true"; then \
+		cd $< && ./contrib/download_prerequisites; \
+	fi
+endef
+
+ifeq ($(FAMILY),arc)
+
+define gcc_install_tcf_wrapper
+	cp -f $(srcdir)/scripts/tcf/arc-tcf-gcc $(INSTALL_DIR)/bin/$(TARGET_TRIPLET)-tcf-gcc
+endef
+
+CONFIGURE_GCC_TARGET := \
+	--disable-tls \
+	--with-isl=no \
+	--with-cloog=no \
+	$(WITH_CPU) \
+	$(WITH_FPU)
+
+CONFIGURE_GCC_MULTILIB := $(MULTILIB_FLAGS) $(MULTILIB_LIST_FLAGS)
+
+else ifeq ($(FAMILY),riscv)
+
+define gcc_install_tcf_wrapper
+	cp -f $(srcdir)/scripts/tcf/riscv64-gf-elf-buildlib $(INSTALL_DIR)/bin/$(TARGET_TRIPLET)-buildlib
+	cp -f $(srcdir)/scripts/tcf/riscv64-gf-elf-tcf-gcc $(INSTALL_DIR)/bin/$(TARGET_TRIPLET)-tcf-gcc
+	cp -f $(srcdir)/scripts/tcf/arcgnulib.py $(INSTALL_DIR)/bin/arcgnulib.py
+endef
+
+CONFIGURE_GCC_TARGET := \
+	--enable-tls \
+	$(WITH_ARCH) \
+	$(WITH_ABI) \
+	$(WITH_TUNE) \
+	$(WITH_ISA_SPEC)
+
+ifneq ($(MULTILIB_GEN),)
+CONFIGURE_GCC_MULTILIB := $(MULTILIB_FLAGS) --with-multilib-generator="$(MULTILIB_GEN)"
+else
+CONFIGURE_GCC_MULTILIB := $(MULTILIB_FLAGS)
+endif
+
+else
+$(error Unsupported target!)
+endif
+
+CONFIGURE_GCC_SYSTEM_ZLIB := @with_system_zlib@
+CONFIGURE_GCC_CHECKING := @gcc_checking@
+
+ifeq ($(LIBC),picolibc)
+CONFIGURE_GCC_LIBC += --enable-initfini-array --with-default-libc=picolibc --enable-stdio=pure
+endif
+
+CONFIGURE_GCC_COMMON := \
+	--with-newlib \
+	--disable-threads \
+	--disable-shared \
+	--enable-__cxa_atexit \
+	--disable-libgomp \
+	--disable-libmudflap \
+	--disable-libmpx \
+	--disable-libssp \
+	--disable-libquadmath \
+	--disable-libquadmath-support \
+	--disable-libstdcxx-verbose \
+	--enable-lto \
+	--disable-plugin \
+	--disable-nls \
+	--disable-libatomic
+
+stamps/build-gcc-stage1-baremetal: $(GCC_SRCDIR) stamps/build-binutils-baremetal
+	$(call gcc_download_prerequisites)
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	cd $(notdir $@) && $</configure \
+		--prefix=$(INSTALL_DIR) \
+		--target=$(TARGET_TRIPLET) \
+		$(CONFIGURE_HOST) \
+		$(CONFIGURE_WERROR) \
+		$(CONFIGURE_GCC_TARGET) \
+		$(CONFIGURE_GCC_SYSTEM_ZLIB) \
+		$(CONFIGURE_GCC_CHECKING) \
+		$(CONFIGURE_GCC_MULTILIB) \
+		$(CONFIGURE_GCC_LIBC) \
+		$(CONFIGURE_GCC_COMMON) \
+		--without-headers \
+		--disable-libstdcxx \
+		--enable-languages=c \
+		$(CONFIGURE_GCC_EXTRA) \
+		CFLAGS="$(CFLAGS_FOR_HOST)" \
+		CXXFLAGS="$(CXXFLAGS_FOR_HOST)" \
+		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
+		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)"
+	$(MAKE) -C $(notdir $@) all-gcc
+	$(MAKE) -C $(notdir $@) install-gcc
+	$(install_aliases)
+	mkdir -p $(dir $@) && touch $@
+
+stamps/build-gcc-stage2-baremetal: $(GCC_SRCDIR) stamps/build-$(LIBC)-baremetal
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	cd $(notdir $@) && $</configure \
+		--prefix=$(INSTALL_DIR) \
+		--target=$(TARGET_TRIPLET) \
+		$(CONFIGURE_HOST) \
+		$(CONFIGURE_WERROR) \
+		$(CONFIGURE_GCC_TARGET) \
+		$(CONFIGURE_GCC_SYSTEM_ZLIB) \
+		$(CONFIGURE_GCC_CHECKING) \
+		$(CONFIGURE_GCC_MULTILIB) \
+		$(CONFIGURE_GCC_LIBC) \
+		$(CONFIGURE_GCC_COMMON) \
+		--with-headers=$(INSTALL_DIR)/$(TARGET_TRIPLET)/include \
+		--enable-languages=c,c++ \
+		$(CONFIGURE_GCC_EXTRA) \
+		CFLAGS="$(CFLAGS_FOR_HOST)" \
+		CXXFLAGS="$(CXXFLAGS_FOR_HOST)" \
+		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
+		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET)"
+	$(MAKE) -C $(notdir $@)
+	$(MAKE) -C $(notdir $@) install
+	$(gcc_install_tcf_wrapper)
+	$(install_aliases)
+	mkdir -p $(dir $@) && touch $@
+
+stamps/build-gcc-stage2-nano-baremetal: $(GCC_SRCDIR) stamps/build-$(LIBC)-nano-baremetal
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	cd $(notdir $@) && $</configure \
+		--prefix=$(INSTALL_DIR)/$(LIBC)-nano \
+		--target=$(TARGET_TRIPLET) \
+		$(CONFIGURE_HOST) \
+		$(CONFIGURE_WERROR) \
+		$(CONFIGURE_GCC_TARGET) \
+		$(CONFIGURE_GCC_SYSTEM_ZLIB) \
+		$(CONFIGURE_GCC_CHECKING) \
+		$(CONFIGURE_GCC_MULTILIB) \
+		$(CONFIGURE_GCC_LIBC) \
+		$(CONFIGURE_GCC_COMMON) \
+		--with-headers=$(INSTALL_DIR)/$(LIBC)-nano/$(TARGET_TRIPLET)/include \
+		--enable-languages=c,c++ \
+		--enable-target-optspace \
+		$(CONFIGURE_GCC_EXTRA) \
+		CFLAGS="$(CFLAGS_FOR_HOST)" \
+		CXXFLAGS="$(CXXFLAGS_FOR_HOST)" \
+		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET) -Os" \
+		CXXFLAGS_FOR_TARGET="$(CXXFLAGS_FOR_TARGET) -Os"
+	$(MAKE) -C $(notdir $@) all-target-libgcc all-target-libstdc++-v3
+	$(MAKE) -C $(notdir $@) install-target-libgcc install-target-libstdc++-v3
+	mkdir -p $(dir $@) && touch $@
+
+#
+# Newlib
+#
+
+ifeq ($(FAMILY),arc)
+CONFIGURE_NEWLIB_TARGET += \
+	--disable-newlib-io-long-double \
+	--disable-newlib-io-c99-formats \
+	--disable-newlib-register-fini
+endif
+
+ifeq ($(FAMILY),riscv)
+CONFIGURE_NEWLIB_TARGET += \
+	--enable-newlib-io-long-double \
+	--enable-newlib-io-c99-formats \
+	--enable-newlib-register-fini
+endif
+
+stamps/build-newlib-baremetal: $(NEWLIB_SRCDIR) stamps/build-gcc-stage1-baremetal
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	cd $(notdir $@) && $</configure \
+		--prefix=$(INSTALL_DIR) \
+		--target=$(TARGET_TRIPLET) \
+		$(CONFIGURE_HOST) \
+		$(CONFIGURE_WERROR) \
+		$(CONFIGURE_NEWLIB_TARGET) \
+		--enable-newlib-io-float \
+		--enable-newlib-supplied-syscalls \
+		--disable-newlib-io-pos-args \
+		--enable-newlib-io-long-long \
+		--disable-newlib-nano-malloc \
+		--disable-newlib-nano-formatted-io \
+		--enable-newlib-atexit-dynamic-alloc \
+		--enable-newlib-global-atexit \
+		--disable-lite-exit \
+		--disable-newlib-reent-small \
+		--enable-newlib-multithread \
+		--disable-newlib-retargetable-locking \
+		--enable-newlib-wide-orient \
+		--enable-newlib-fseek-optimization \
+		--enable-newlib-fvwrite-in-streamio \
+		--enable-newlib-unbuf-stream-opt \
+		--disable-target-optspace \
+		$(CONFIGURE_NEWLIB_EXTRA) \
+		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)" \
+		CXXFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET)"
+	$(MAKE) -C $(notdir $@)
+	$(MAKE) -C $(notdir $@) install
+	mkdir -p $(dir $@) && touch $@
+
+ifeq ($(FAMILY),arc)
+CONFIGURE_NEWLIB_NANO_TARGET := \
+	--disable-newlib-atexit-dynamic-alloc
+endif
+
+ifeq ($(FAMILY),riscv)
+CONFIGURE_NEWLIB_NANO_TARGET := \
+	--enable-newlib-atexit-dynamic-alloc
+endif
+
+stamps/build-newlib-nano-baremetal: $(NEWLIB_SRCDIR) stamps/build-gcc-stage2-baremetal
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	cd $(notdir $@) && $</configure \
+		--prefix=$(INSTALL_DIR)/newlib-nano \
+		--target=$(TARGET_TRIPLET) \
+		$(CONFIGURE_HOST) \
+		$(CONFIGURE_WERROR) \
+		$(CONFIGURE_NEWLIB_NANO_TARGET) \
+		--enable-newlib-io-float \
+		--disable-newlib-io-long-double \
+		--enable-newlib-supplied-syscalls \
+		--disable-newlib-io-pos-args \
+		--disable-newlib-io-c99-formats \
+		--disable-newlib-io-long-long \
+		--disable-newlib-register-fini \
+		--enable-newlib-nano-malloc \
+		--enable-newlib-nano-formatted-io \
+		--enable-newlib-global-atexit \
+		--enable-lite-exit \
+		--enable-newlib-reent-small \
+		--disable-newlib-multithread \
+		--disable-newlib-retargetable-locking \
+		--disable-newlib-wide-orient \
+		--disable-newlib-fseek-optimization \
+		--disable-newlib-fvwrite-in-streamio \
+		--disable-newlib-unbuf-stream-opt \
+		--enable-target-optspace \
+		$(CONFIGURE_NEWLIB_EXTRA) \
+		CFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET) -Os" \
+		CXXFLAGS_FOR_TARGET="$(CFLAGS_FOR_TARGET) -Os"
+	$(MAKE) -C $(notdir $@)
+	$(MAKE) -C $(notdir $@) install
+	$(srcdir)/scripts/generate_nano_specs \
+		--triplet $(TARGET_TRIPLET) \
+		--nano-dir-name $(LIBC)-nano \
+		> $(INSTALL_DIR)/$(TARGET_TRIPLET)/lib/nano.specs
+	mkdir -p $(dir $@) && touch $@
+
+#
+# Picolibc
+#
+
+PICOLIBC_CROSS_FILENAME := cross-$(TARGET_CPU).txt
+PICOLIBC_CROSS_TESTS_FILENAME := cross-$(TARGET_CPU)-tests.txt
+
+ifeq ($(FAMILY),arc)
+CONFIGURE_PICOLIBC_TARGET := -Dthread-local-storage=false
+endif
+
+ifeq ($(FAMILY),riscv)
+CONFIGURE_PICOLIBC_TARGET :=
+
+define PICOLIBC_OBSOLETE_MATH_BLOCK
+#if (__riscv_flen < 64) && !defined(__riscv_zdinx)
+#undef __OBSOLETE_MATH
+#undef __OBSOLETE_MATH_FLOAT
+#undef __OBSOLETE_MATH_DOUBLE
+#define __OBSOLETE_MATH 1
+#endif
+endef
+export PICOLIBC_OBSOLETE_MATH_BLOCK
+endif
+
+CONFIGURE_PICOLIBC_COMMON := \
+	-Dincludedir=include \
+	-Dsystem-libc=true \
+	-Dposix-console=true \
+	-Dnewlib-obsolete-math=false \
+	-Dwant-math-errno=true \
+	-Dassert-verbose=true \
+	-Ddebug=true \
+	-Dwerror=true
+
+CONFIGURE_PICOLIBC := \
+	--cross-file $(srcdir)/crossfiles/$(PICOLIBC_CROSS_FILENAME) \
+	-Dprefix=$(INSTALL_DIR)/$(TARGET_TRIPLET) \
+	-Dlibdir=$(INSTALL_DIR)/$(TARGET_TRIPLET)/lib \
+	-Dspecsdir=$(INSTALL_DIR)/$(TARGET_TRIPLET)/lib \
+	-Dc_args="$(CFLAGS_FOR_TARGET) $(CFLAGS_FOR_TARGET_PICOLIBC)" \
+	-Dcpp_args="$(CFLAGS_FOR_TARGET) $(CFLAGS_FOR_TARGET_PICOLIBC)" \
+	-Doptimization=2 \
+	-Dio-c99-formats=true \
+	-Dio-long-long=true \
+	-Dio-long-double=true \
+	-Dio-percent-b=true \
+	-Dprintf-percent-n=true \
+	-Dfast-bufio=true \
+	-Dmb-capable=true \
+	-Dio-wchar=true \
+	$(CONFIGURE_PICOLIBC_COMMON) \
+	$(CONFIGURE_PICOLIBC_TARGET) \
+	$(CONFIGURE_PICOLIBC_EXTRA)
+
+CONFIGURE_PICOLIBC_NANO := \
+	--cross-file $(srcdir)/crossfiles/$(PICOLIBC_CROSS_FILENAME) \
+	-Dprefix=$(INSTALL_DIR)/$(LIBC)-nano/$(TARGET_TRIPLET) \
+	-Dlibdir=$(INSTALL_DIR)/$(LIBC)-nano/$(TARGET_TRIPLET)/lib \
+	-Dspecsdir=none \
+	-Dc_args="$(CFLAGS_FOR_TARGET) $(CFLAGS_FOR_TARGET_PICOLIBC) -Os" \
+	-Dcpp_args="$(CFLAGS_FOR_TARGET) $(CFLAGS_FOR_TARGET_PICOLIBC) -Os" \
+	-Doptimization=s \
+	-Dio-c99-formats=true \
+	-Dio-long-long=false \
+	-Dio-long-double=false \
+	-Dio-percent-b=false \
+	-Dprintf-percent-n=false \
+	-Dfast-bufio=false \
+	-Dmb-capable=false \
+	-Dio-wchar=false \
+	$(CONFIGURE_PICOLIBC_COMMON) \
+	$(CONFIGURE_PICOLIBC_TARGET) \
+	$(CONFIGURE_PICOLIBC_EXTRA)
+
+stamps/build-picolibc-baremetal: $(PICOLIBC_SRCDIR) stamps/build-gcc-stage1-baremetal
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	meson setup $(notdir $@) $< \
+		$(CONFIGURE_PICOLIBC)
+	if [ -n "$$PICOLIBC_OBSOLETE_MATH_BLOCK" ]; then \
+		echo "$$PICOLIBC_OBSOLETE_MATH_BLOCK" >> $(notdir $@)/picolibc.h; \
+	fi
+	meson compile -C $(notdir $@)
+	meson install -C $(notdir $@)
+	mkdir -p $(dir $@) && touch $@
+
+stamps/build-picolibc-baremetal-tests: $(PICOLIBC_SRCDIR) stamps/build-gcc-stage2-baremetal
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	meson setup $(notdir $@) $< \
+		$(CONFIGURE_PICOLIBC) \
+		-Dtests=true \
+		-Dtest-machine=$(WITH_SIM)
+	if [ -n "$$PICOLIBC_OBSOLETE_MATH_BLOCK" ]; then \
+		echo "$$PICOLIBC_OBSOLETE_MATH_BLOCK" >> $(notdir $@)/picolibc.h; \
+	fi
+	meson compile -C $(notdir $@)
+	mkdir -p $(dir $@) && touch $@
+
+stamps/build-picolibc-nano-baremetal: $(PICOLIBC_SRCDIR) stamps/build-gcc-stage2-baremetal
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	meson setup $(notdir $@) $< \
+		$(CONFIGURE_PICOLIBC_NANO)
+	if [ -n "$$PICOLIBC_OBSOLETE_MATH_BLOCK" ]; then \
+		echo "$$PICOLIBC_OBSOLETE_MATH_BLOCK" >> $(notdir $@)/picolibc.h; \
+	fi
+	meson compile -C $(notdir $@)
+	meson install -C $(notdir $@)
+	$(srcdir)/scripts/generate_nano_specs \
+		--triplet $(TARGET_TRIPLET) \
+		--nano-dir-name $(LIBC)-nano \
+		> $(INSTALL_DIR)/$(TARGET_TRIPLET)/lib/nano.specs
+	mkdir -p $(dir $@) && touch $@
+
+#
+# QEMU
+#
+
+.PHONY: glib qemu
+
+openocd: stamps/build-glib stamps/build-qemu
+
+GLIB_VERSION := 2.72.4
+GLIB_NAME := glib-$(GLIB_VERSION)
+GLIB_ARCHIVE := $(srcdir)/contrib/$(GLIB_NAME).tar.xz
+GLIB_PREFIX := $(abspath install-glib)
+
+ifeq ($(FAMILY),arc)
+	QEMU_TARGETS := arc-softmmu,arc32-softmmu,arc64-softmmu
+else ifeq ($(FAMILY),riscv)
+	QEMU_TARGETS := riscv32-softmmu,riscv64-softmmu
+else
+	$(error Unsupported target CPU!)
+endif
+
+stamps/build-glib: $(GLIB_ARCHIVE)
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	tar xf $< -C $(notdir $@)
+	meson setup $(notdir $@)/build $(notdir $@)/$(GLIB_NAME) \
+		--prefix="$(GLIB_PREFIX)" \
+		--libdir=lib \
+		--buildtype=release \
+		-Ddefault_library=static \
+		-Db_staticpic=true \
+		-Dtests=false \
+		-Dnls=disabled \
+		-Dselinux=disabled \
+		-Dlibmount=disabled
+	ninja -C $(notdir $@)/build
+	ninja -C $(notdir $@)/build install
+	mkdir -p $(dir $@) && touch $@
+
+stamps/build-qemu: export PATH := $(GLIB_PREFIX)/bin:$(PATH)
+stamps/build-qemu: export PKG_CONFIG_PATH = $(GLIB_PREFIX)/lib/pkgconfig
+stamps/build-qemu: $(QEMU_SRCDIR) stamps/build-glib
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	cd $(notdir $@) && $</configure \
+		--prefix=$(INSTALL_DIR) \
+		--target-list=$(QEMU_TARGETS) \
+		--enable-debug \
+		--enable-plugins \
+		--disable-docs \
+		--disable-user
+	$(MAKE) -C $(notdir $@)
+	$(MAKE) -C $(notdir $@) install
+	mkdir -p $(dir $@) && touch $@
+
+#
+# OpenOCD
+#
+
+.PHONY: openocd
+
+openocd: stamps/build-openocd
+
+stamps/build-openocd: $(OPENOCD_SRCDIR)
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	cd $< && ./bootstrap
+	cd $(notdir $@) && $</configure \
+		--prefix=$(INSTALL_DIR) \
+		--enable-ftdi \
+		--disable-werror \
+		--disable-doxygen-html
+	$(MAKE) -C $(notdir $@)
+	$(MAKE) -C $(notdir $@) install
+	mkdir -p $(dir $@) && touch $@
+
+#
+# DejaGNU
+#
+
+.PHONY: dejagnu
+
+openocd: stamps/build-dejagnu
+
+stamps/build-dejagnu: $(DEJAGNU_SRCDIR)
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	cd $(notdir $@) && $</configure \
+		--prefix=$(INSTALL_DIR)
+	$(MAKE) -C $(notdir $@)
+	$(MAKE) -C $(notdir $@) install
+	mkdir -p $(dir $@) && touch $@
+
+#
+# Tests
+#
+
+export DEJAGNU = $(srcdir)/scripts/dejagnu/site.exp
+
+# TODO: Generate DEJAGNU_TARGET_MULTILIB from configure options
+
+ifeq ($(TARGET_CPU),arc)
+DEJAGNU_TARGET_MULTILIB ?= -mcpu=archs
+else ifeq ($(TARGET_CPU),arc32)
+DEJAGNU_TARGET_MULTILIB ?= -mcpu=hs5x
+else ifeq ($(TARGET_CPU),arc64)
+DEJAGNU_TARGET_MULTILIB ?= -mcpu=hs6x
+else ifeq ($(TARGET_CPU),riscv32)
+DEJAGNU_TARGET_MULTILIB ?= -march=rv32imac/-mabi=ilp32/-mcmodel=medlow
+else ifeq ($(TARGET_CPU),riscv64)
+DEJAGNU_TARGET_MULTILIB ?= -march=rv64imac/-mabi=lp64/-mcmodel=medany
+else
+$(error Unsupported target CPU!)
+endif
+
+DEJAGNU_PATH := $(srcdir)/scripts/wrapper/$(WITH_SIM):$(INSTALL_DIR)/bin:$(PATH)
+DEJAGNU_TARGET_BASEBOARD := $(FAMILY)-sim
+DEJAGNU_TARGET_BOARD := $(DEJAGNU_TARGET_BASEBOARD)/$(DEJAGNU_TARGET_MULTILIB)
+DEJAGNU_DEPENDENCIES := stamps/build-dejagnu
+
+ifeq ($(WITH_SIM),qemu)
+DEJAGNU_DEPENDENCIES += stamps/build-qemu
+else ifeq ($(WITH_SIM),nsim)
+else
+$(error Unsupported simulator!)
+endif
+
+ifeq ($(FAMILY),arc)
+	ifeq ($(LIBC),newlib)
+		export DEJAGNU_CFLAGS =
+		export DEJAGNU_LDFLAGS = \
+			-specs=nsim.specs \
+			-Wl,-defsym=__DEFAULT_HEAP_SIZE=256M \
+			-Wl,-defsym=__DEFAULT_STACK_SIZE=1024M
+	else ifeq ($(LIBC),picolibc)
+		export DEJAGNU_CFLAGS = $(CFLAGS_FOR_TARGET_NO_SDATA)
+		export DEJAGNU_LDFLAGS = \
+			-specs=picolibcpp.specs \
+			--crt0=semihost-trap \
+			--oslib=semihost \
+			-Wl,-defsym=__flash=0x0 \
+			-Wl,-defsym=__flash_size=0x80000000 \
+			-Wl,-defsym=__ram=0x80000000 \
+			-Wl,-defsym=__ram_size=0x80000000 \
+			-Wl,-defsym=__heap_size_min=256m \
+			-Wl,-defsym=__stack_size=1024m \
+			-Wl,--no-warn-rwx-segments
+	else
+		$(error Unsupported libc!)
+	endif
+else ifeq ($(FAMILY),riscv)
+	ifeq ($(LIBC),newlib)
+		export DEJAGNU_CFLAGS =
+		export DEJAGNU_LDFLAGS = \
+			-specs=semihost.specs \
+			-specs=arcv.specs \
+			-Wl,-defsym=txtmem_addr=0x80000000 \
+			-Wl,-defsym=txtmem_len=32M \
+			-Wl,-defsym=datamem_addr=0x82000000 \
+			-Wl,-defsym=datamem_len=32M
+		export DEJAGNU_LDSCRIPT = -T arcv.ld
+	else ifeq ($(LIBC),picolibc)
+		export DEJAGNU_CFLAGS =
+		export DEJAGNU_LDFLAGS = \
+			-specs=picolibcpp.specs \
+			--crt0=arcv-semihost \
+			--oslib=semihost \
+			-Wl,-defsym=__flash=0x80000000 \
+			-Wl,-defsym=__flash_size=32M \
+			-Wl,-defsym=__ram=0x82000000 \
+			-Wl,-defsym=__ram_size=32M
+	else
+		$(error Unsupported libc!)
+	endif
+else
+$(error Unsupported target CPU!)
+endif
+
+stamps/check-gcc-baremetal: export PATH := $(DEJAGNU_PATH)
+stamps/check-gcc-baremetal: stamps/build-gcc-stage2-baremetal $(DEJAGNU_DEPENDENCIES)
+	$(MAKE) -C build-gcc-stage2-baremetal check-gcc "RUNTESTFLAGS=$(RUNTESTFLAGS) --target_board='$(DEJAGNU_TARGET_BOARD)'" || true
+	mkdir -p $(dir $@) && touch $@
+
+stamps/check-binutils-baremetal: export PATH := $(DEJAGNU_PATH)
+stamps/check-binutils-baremetal: stamps/build-gcc-stage2-baremetal $(DEJAGNU_DEPENDENCIES)
+	$(MAKE) -C build-binutils-baremetal check-binutils check-gas check-ld -k "RUNTESTFLAGS=$(RUNTESTFLAGS) --target_board='$(DEJAGNU_TARGET_BOARD)'" || true
+	mkdir -p $(dir $@) && touch $@
+
+stamps/check-gdb-baremetal: export PATH := $(DEJAGNU_PATH)
+stamps/check-gdb-baremetal: stamps/build-gcc-stage2-baremetal stamps/build-gdb-baremetal $(DEJAGNU_DEPENDENCIES)
+	$(MAKE) -C build-gdb-baremetal check-gdb "RUNTESTFLAGS=$(RUNTESTFLAGS) --target_board='$(DEJAGNU_TARGET_BOARD)'" || true
+	mkdir -p $(dir $@) && touch $@
+
+stamps/check-newlib-baremetal: export PATH := $(DEJAGNU_PATH)
+stamps/check-newlib-baremetal: stamps/build-gcc-stage2-baremetal $(DEJAGNU_DEPENDENCIES)
+	$(MAKE) -C build-newlib-baremetal check -k "RUNTESTFLAGS=$(RUNTESTFLAGS) --target_board='$(DEJAGNU_TARGET_BOARD)'" || true
+	mkdir -p $(dir $@) && touch $@
+
+stamps/check-picolibc-baremetal: export PATH := $(DEJAGNU_PATH)
+stamps/check-picolibc-baremetal: stamps/build-picolibc-baremetal-tests $(DEJAGNU_DEPENDENCIES)
+	meson test --timeout-multiplier 3 -C $(notdir $<) -v 2>&1 | tee $(notdir $<)/test.log || true
+	mkdir -p $(dir $@) && touch $@
+
+clean:
+	rm -rf build-* stamps autom4te.cache
+
+Makefile: $(srcdir)/Makefile.in config.status
+	CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
+
+config.status: $(srcdir)/configure
+	CONFIG_SHELL="$(SHELL)" $(SHELL) ./config.status --recheck

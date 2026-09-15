@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+
+# Copyright (c) 2024-2026, MIPS Holding, Inc. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1) Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+#
+# 2) Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# 3) Neither the name of the MIPS Holding, Inc., nor the names of its contributors
+# may be used to endorse or promote products derived from this software
+# without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+import logging
+import os
+import subprocess
+import sys
+
+sys.dont_write_bytecode = True
+
+import arcgnulib
+from arcgnulib import TCF, CompilerInfo
+
+logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.ERROR)
+
+
+_tcf_help = """\
+Usage: riscv64-gf-elf-tcf-gcc [-tcf=<TCF path>] [-tcf-debug]
+                              [-tcf-no-compressed] [-tcf-no-memory]
+                              [-tcf-help] [-tcf-buildlib=<path>]
+                              [<GCC options>]
+
+Description of available options:
+
+    -tcf=<path>               pass a path to a TCF file for parsing GCC options
+    -tcf-debug                enable printing of debug messages
+    -tcf-dry-run              do not execute the command, only print it
+    -tcf-help                 show this help message
+    -tcf-no-compressed        remove extensions for compressed instructions from march
+    -tcf-with-memory-defines  pass memory layout variables from TCF through -defsym for a default .ld file
+    -tcf-buildlib=<path>      pass a path to a directory with a buildlib configuration
+    <GCC options>             all other options a passed directly to GCC
+"""
+
+
+def print_tcf_help():
+    print(_tcf_help)
+
+
+def main():
+    original_arguments = sys.argv.copy()[1:]
+    filtered_arguments_before = []
+    filtered_arguments_after = []
+    filtered_arguments_current = filtered_arguments_before
+    tcf_filename = None
+    tcf_options = []
+    tcf_no_compressed = False
+    tcf_no_memory = True
+    tcf_dry_run = False
+
+    if "-tcf-help" in original_arguments:
+        print_tcf_help()
+        return 0
+
+    if "-tcf-debug" in original_arguments:
+        logging.getLogger().setLevel(logging.DEBUG)
+        original_arguments = list(filter(lambda x: x != "-tcf-debug", original_arguments))
+
+    gcc_triplet, tool = os.path.basename(__file__).split("-tcf-")
+    compiler_name = "{}-{}".format(gcc_triplet, tool)
+
+    try:
+        compiler_info = CompilerInfo(compiler_name)
+    except arcgnulib.CompilerInfoGCCNotFoundError as exc:
+        logging.error(str(exc))
+        return 1
+    except arcgnulib.CompilerInfoGCCExecutionError as exc:
+        logging.error(str(exc))
+        return 1
+
+    gcc_path = compiler_info.get_compiler_path()
+    gcc_triplet = compiler_info.get_compiler_triplet()
+
+    # Parse arguments and find -tcf*=... options
+    for arg in original_arguments:
+        if arg.startswith("-tcf="):
+            tcf_filename = arg.split("=", maxsplit=1)[1]
+            filtered_arguments_current = filtered_arguments_after
+        elif arg == "-tcf-dry-run":
+            tcf_dry_run = True
+        elif arg == "-tcf-no-compressed":
+            tcf_no_compressed = True
+        elif arg == "-tcf-with-memory-defines":
+            tcf_no_memory = False
+        elif arg.startswith("-tcf-buildlib="):
+            buildlib_dir = arg.split("=", maxsplit=1)[1]
+            buildlib_dir_path = os.path.abspath(buildlib_dir)
+            specs_file_path = os.path.join(buildlib_dir_path, "buildlib.specs")
+            libgcc_path = os.path.join(buildlib_dir_path, "lib", "gcc")
+            libc_path = os.path.join(buildlib_dir_path, gcc_triplet, "lib")
+            filtered_arguments_current.extend(["-specs={}".format(specs_file_path), "-B{}".format(libgcc_path), "-B{}".format(libc_path)])
+        else:
+            filtered_arguments_current.append(arg)
+
+    if tcf_filename is not None:
+        tcf = TCF.from_file(tcf_filename)
+        tcf_options = tcf.get_compile_options(no_compressed=tcf_no_compressed)
+
+        if not tcf_no_memory:
+            tcf_options.extend(tcf.get_memory_options())
+
+    # Call GCC binary with all arguments
+    subprocess_arguments = [gcc_path, *filtered_arguments_before, *tcf_options, *filtered_arguments_after]
+    logging.debug("Running GCC:\n%s", " ".join(subprocess_arguments))
+
+    exit_code = 0
+
+    if not tcf_dry_run:
+        try:
+            exit_code = subprocess.call(subprocess_arguments)
+        except FileNotFoundError:
+            logging.error("cannot find GCC binary: %s", gcc_path)
+            exit_code = 1
+    else:
+        print(" ".join(subprocess_arguments))
+
+    return exit_code
+
+
+if __name__ == "__main__":
+    sys.exit(main())
