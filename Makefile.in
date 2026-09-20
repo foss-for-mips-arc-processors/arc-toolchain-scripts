@@ -35,6 +35,7 @@ WITH_ARCH := @WITH_ARCH@
 WITH_ABI := @WITH_ABI@
 WITH_TUNE := @WITH_TUNE@
 WITH_ISA_SPEC := @WITH_ISA_SPEC@
+CMODEL := @cmodel@
 WITH_SIM := @WITH_SIM@
 
 SHELL := /bin/sh
@@ -51,6 +52,9 @@ endif
 
 export PATH AWK SED
 
+CFLAGS_FOR_HOST := -O2 $(CFLAGS_FOR_HOST_EXTRA) @host_cflags@
+CXXFLAGS_FOR_HOST := -O2 $(CXXFLAGS_FOR_HOST_EXTRA) @host_cxxflags@
+
 # Picolibc for ARCv2 does not fully support small data
 ifeq ($(LIBC),picolibc)
 ifeq ($(TARGET_CPU),arc)
@@ -61,11 +65,26 @@ endif
 # These flags are used only for building Picolibc sources
 CFLAGS_FOR_TARGET_PICOLIBC := -fno-common -ftls-model=local-exec
 
-CFLAGS_FOR_HOST := -O2 $(CFLAGS_FOR_HOST_EXTRA) @host_cflags@
-CXXFLAGS_FOR_HOST := -O2 $(CXXFLAGS_FOR_HOST_EXTRA) @host_cxxflags@
-CFLAGS_FOR_TARGET := -O2 -ffunction-sections $(CFLAGS_FOR_TARGET_NO_SDATA) $(CFLAGS_FOR_TARGET_EXTRA) $(DEBUG_INFO) @target_cflags@ @cmodel@
-CXXFLAGS_FOR_TARGET := -O2 -ffunction-sections $(CFLAGS_FOR_TARGET_NO_SDATA) $(CXXFLAGS_FOR_TARGET_EXTRA) $(DEBUG_INFO) @target_cxxflags@ @cmodel@
-ASFLAGS_FOR_TARGET := $(ASFLAGS_FOR_TARGET_EXTRA) $(DEBUG_INFO) @cmodel@
+ifeq ($(CMODEL),)
+CMODEL_FOR_TARGET :=
+WITH_CMODEL :=
+else ifeq ($(CMODEL),medlow)
+CMODEL_FOR_TARGET :=
+WITH_CMODEL :=
+else
+CMODEL_FOR_TARGET := -mcmodel=$(CMODEL)
+WITH_CMODEL := --with-cmodel=$(CMODEL)
+endif
+
+ifneq (,$(findstring --cmodel,$(MULTILIB_GEN)))
+CFLAGS_FOR_TARGET := -O2 -ffunction-sections $(CFLAGS_FOR_TARGET_NO_SDATA) $(CFLAGS_FOR_TARGET_EXTRA) $(DEBUG_INFO) @target_cflags@
+CXXFLAGS_FOR_TARGET := -O2 -ffunction-sections $(CFLAGS_FOR_TARGET_NO_SDATA) $(CXXFLAGS_FOR_TARGET_EXTRA) $(DEBUG_INFO) @target_cxxflags@
+ASFLAGS_FOR_TARGET := $(ASFLAGS_FOR_TARGET_EXTRA) $(DEBUG_INFO)
+else
+CFLAGS_FOR_TARGET := -O2 -ffunction-sections $(CFLAGS_FOR_TARGET_NO_SDATA) $(CFLAGS_FOR_TARGET_EXTRA) $(DEBUG_INFO) @target_cflags@ $(CMODEL_FOR_TARGET)
+CXXFLAGS_FOR_TARGET := -O2 -ffunction-sections $(CFLAGS_FOR_TARGET_NO_SDATA) $(CXXFLAGS_FOR_TARGET_EXTRA) $(DEBUG_INFO) @target_cxxflags@ $(CMODEL_FOR_TARGET)
+ASFLAGS_FOR_TARGET := $(ASFLAGS_FOR_TARGET_EXTRA) $(DEBUG_INFO) $(CMODEL_FOR_TARGET)
+endif
 
 ifeq ($(TARGET_TRIPLET),)
 $(error internal error: target triplet is empty)
@@ -167,6 +186,7 @@ stamps/check-write-permission:
 ifeq ($(FAMILY),arc)
 define install_aliases
 	cd $(INSTALL_DIR)/bin && \
+	ln -sf $(TARGET_TRIPLET)-gcc $(TARGET_TRIPLET)-cc && \
 	for file_name in $(TARGET_TRIPLET)-*; do \
 		link_name=`echo $${file_name} | sed 's/$(TARGET_TRIPLET)/$(TARGET_ALIAS_NAME)/g'`; \
 		ln -sf $${file_name} $${link_name}; \
@@ -175,6 +195,7 @@ endef
 else ifeq ($(FAMILY),riscv)
 define install_aliases
 	cd $(INSTALL_DIR)/bin && \
+	ln -sf $(TARGET_TRIPLET)-gcc $(TARGET_TRIPLET)-cc && \
 	if [ "$(VENDOR)" != unknown ]; then \
 		for file_name in $(TARGET_CPU)-$(VENDOR)-*; do \
 			link_name=`echo $${file_name} | sed 's/$(VENDOR)/unknown/g'`; \
@@ -288,7 +309,8 @@ CONFIGURE_GCC_TARGET := \
 	$(WITH_ARCH) \
 	$(WITH_ABI) \
 	$(WITH_TUNE) \
-	$(WITH_ISA_SPEC)
+	$(WITH_CMODEL) \
+	$(WITH_ISA_SPEC) \
 
 ifneq ($(MULTILIB_GEN),)
 CONFIGURE_GCC_MULTILIB := $(MULTILIB_FLAGS) --with-multilib-generator="$(MULTILIB_GEN)"
@@ -720,25 +742,8 @@ stamps/build-dejagnu: $(DEJAGNU_SRCDIR)
 
 export DEJAGNU = $(srcdir)/scripts/dejagnu/site.exp
 
-# TODO: Generate DEJAGNU_TARGET_MULTILIB from configure options
-
-ifeq ($(TARGET_CPU),arc)
-DEJAGNU_TARGET_MULTILIB ?= -mcpu=archs
-else ifeq ($(TARGET_CPU),arc32)
-DEJAGNU_TARGET_MULTILIB ?= -mcpu=hs5x
-else ifeq ($(TARGET_CPU),arc64)
-DEJAGNU_TARGET_MULTILIB ?= -mcpu=hs6x
-else ifeq ($(TARGET_CPU),riscv32)
-DEJAGNU_TARGET_MULTILIB ?= -march=rv32imac/-mabi=ilp32/-mcmodel=medlow
-else ifeq ($(TARGET_CPU),riscv64)
-DEJAGNU_TARGET_MULTILIB ?= -march=rv64imac/-mabi=lp64/-mcmodel=medany
-else
-$(error Unsupported target CPU!)
-endif
-
 DEJAGNU_PATH := $(srcdir)/scripts/wrapper/$(WITH_SIM):$(INSTALL_DIR)/bin:$(PATH)
-DEJAGNU_TARGET_BASEBOARD := $(FAMILY)-sim
-DEJAGNU_TARGET_BOARD := $(DEJAGNU_TARGET_BASEBOARD)/$(DEJAGNU_TARGET_MULTILIB)
+DEJAGNU_TARGET_BOARD ?= $(FAMILY)-sim
 DEJAGNU_DEPENDENCIES := stamps/build-dejagnu
 
 ifeq ($(WITH_SIM),qemu)
@@ -786,7 +791,7 @@ else ifeq ($(FAMILY),riscv)
 		export DEJAGNU_CFLAGS =
 		export DEJAGNU_LDFLAGS = \
 			-specs=picolibcpp.specs \
-			--crt0=arcv-semihost \
+			--crt0=semihost \
 			--oslib=semihost \
 			-Wl,-defsym=__flash=0x80000000 \
 			-Wl,-defsym=__flash_size=32M \
@@ -798,6 +803,21 @@ else ifeq ($(FAMILY),riscv)
 else
 $(error Unsupported target CPU!)
 endif
+
+.PHONY: \
+	check-gcc-baremetal \
+	check-binutils-baremetal \
+	check-gdb-baremetal \
+	check-newlib-baremetal \
+	check-picolibc-baremetal \
+	check-libc-baremetal
+
+check-gcc-baremetal: stamps/check-gcc-baremetal
+check-binutils-baremetal: stamps/check-binutils-baremetal
+check-gdb-baremetal: stamps/check-gdb-baremetal
+check-newlib-baremetal: stamps/check-newlib-baremetal
+check-picolibc-baremetal: stamps/check-picolibc-baremetal
+check-libc-baremetal: stamps/check-$(LIBC)-baremetal
 
 stamps/check-gcc-baremetal: export PATH := $(DEJAGNU_PATH)
 stamps/check-gcc-baremetal: stamps/build-gcc-stage2-baremetal $(DEJAGNU_DEPENDENCIES)

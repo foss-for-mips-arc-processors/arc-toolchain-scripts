@@ -192,8 +192,8 @@ AS_IF([test "x$enable_gcc_checking" != xno],
 	[AC_SUBST(gcc_checking, --enable-checking=release)])
 
 AC_ARG_WITH(cmodel,
-	[AS_HELP_STRING([--with-cmodel],
-		[Code model for libc and libgcc; RISC-V defaults to medlow])],
+	[AS_HELP_STRING([--with-cmodel=medany],
+		[Code model for libc and libgcc; RISC-V only @<:@medlow@:>@])],
 	[],
 	[with_cmodel=])
 
@@ -293,6 +293,8 @@ AS_IF([test "x$family" = xarc],
 		[AC_MSG_ERROR([--with-tune is only valid with --target=riscv32|riscv64])])
 	 AS_IF([test "x$with_isa_spec" != x],
 		[AC_MSG_ERROR([--with-isa-spec is only valid with --target=riscv32|riscv64])])
+	 AS_IF([test "x$with_cmodel" != x],
+		[AC_MSG_ERROR([--with-cmodel is only valid with --target=riscv32|riscv64])])
 	 AS_IF([test "x$with_multilib_generator" != x],
 		[AC_MSG_ERROR([--with-multilib-generator is only valid with --target=riscv32|riscv64])])
 	 AS_IF([test "x$with_cpu" != x],
@@ -388,14 +390,8 @@ AS_IF([test "x$enable_multilib" != xno || test "x$with_multilib_generator" != x]
 	[AC_SUBST(multilib_flags, --disable-multilib)])
 
 AS_IF([test "x$family" = xriscv],
-	[AS_IF([test "x$with_cmodel" = x], [with_cmodel=medlow])
-	 AS_IF([test "x$with_cmodel" = xmedlow],
-		[cmodel_flag=],
-		[cmodel_flag="-mcmodel=$with_cmodel"])],
-	[AS_IF([test "x$with_cmodel" != x],
-		[cmodel_flag="-mcmodel=$with_cmodel"],
-		[cmodel_flag=])])
-AC_SUBST(cmodel, [$cmodel_flag])
+	[AS_IF([test "x$with_cmodel" = x], [with_cmodel=medlow])])
+AC_SUBST(cmodel, [$with_cmodel])
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([scripts/wrapper/awk/awk], [chmod +x scripts/wrapper/awk/awk])

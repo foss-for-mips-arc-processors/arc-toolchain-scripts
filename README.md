@@ -67,7 +67,6 @@ autoconf
 | `--with-libc=`                   | `picolibc` if baremetal, `glibc` if linux | `picolibc` / `newlib` (baremetal), `glibc` (linux) |
 | `--enable-multilib`              | disabled                                  |                                                    |
 | `--enable-gdb` / `--disable-gdb` | enabled                                   |                                                    |
-| `--with-cmodel=`                 | RISC-V: `medlow`; ARC: none               |                                                    |
 | `--with-*-src=`                  | `src/<component>`                         | Per-component source path                          |
 
 ### ARC Classic
@@ -87,6 +86,7 @@ autoconf
 | `--with-abi=`                | derived from arch   |                                |
 | `--with-tune=`               |                     |                                |
 | `--with-isa-spec=`           | `20191213`          |                                |
+| `--with-cmodel=`             | `medlow`            |                                |
 | `--with-multilib-generator=` |                     | Implies `--enable-multilib`    |
 
 RISC-V is little-endian only (`--with-endian=big` is an error). After install,

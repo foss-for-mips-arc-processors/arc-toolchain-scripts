@@ -1408,8 +1408,7 @@ Optional Packages:
   --with-multilib-generator=GEN
                           RISC-V bare-metal multilib generator string; implies
                           --enable-multilib
-  --with-cmodel           Code model for libc and libgcc; RISC-V defaults to
-                          medlow
+  --with-cmodel=medany    Code model for libc and libgcc; RISC-V only [medlow]
   --without-system-zlib   Use GCC's bundled zlib
   --with-host=TRIPLE      Host triple for the toolchain (e.g. mingw cross)
   --with-target-cflags    Extra C flags for target libraries
@@ -4463,6 +4462,10 @@ fi
 then :
   as_fn_error $? "--with-isa-spec is only valid with --target=riscv32|riscv64" "$LINENO" 5
 fi
+	 if test "x$with_cmodel" != x
+then :
+  as_fn_error $? "--with-cmodel is only valid with --target=riscv32|riscv64" "$LINENO" 5
+fi
 	 if test "x$with_multilib_generator" != x
 then :
   as_fn_error $? "--with-multilib-generator is only valid with --target=riscv32|riscv64" "$LINENO" 5
@@ -4636,21 +4639,8 @@ then :
 then :
   with_cmodel=medlow
 fi
-	 if test "x$with_cmodel" = xmedlow
-then :
-  cmodel_flag=
-else $as_nop
-  cmodel_flag="-mcmodel=$with_cmodel"
 fi
-else $as_nop
-  if test "x$with_cmodel" != x
-then :
-  cmodel_flag="-mcmodel=$with_cmodel"
-else $as_nop
-  cmodel_flag=
-fi
-fi
-cmodel=$cmodel_flag
+cmodel=$with_cmodel
 
 
 ac_config_files="$ac_config_files Makefile"
