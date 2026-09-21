@@ -531,9 +531,6 @@ stamps/build-newlib-nano-baremetal: $(NEWLIB_SRCDIR) stamps/build-gcc-stage2-bar
 # Picolibc
 #
 
-PICOLIBC_CROSS_FILENAME := cross-$(TARGET_CPU).txt
-PICOLIBC_CROSS_TESTS_FILENAME := cross-$(TARGET_CPU)-tests.txt
-
 ifeq ($(FAMILY),arc)
 CONFIGURE_PICOLIBC_TARGET := -Dthread-local-storage=false
 endif
@@ -563,7 +560,6 @@ CONFIGURE_PICOLIBC_COMMON := \
 	-Dwerror=true
 
 CONFIGURE_PICOLIBC := \
-	--cross-file $(srcdir)/crossfiles/$(PICOLIBC_CROSS_FILENAME) \
 	-Dprefix=$(INSTALL_DIR)/$(TARGET_TRIPLET) \
 	-Dlibdir=$(INSTALL_DIR)/$(TARGET_TRIPLET)/lib \
 	-Dspecsdir=$(INSTALL_DIR)/$(TARGET_TRIPLET)/lib \
@@ -583,7 +579,6 @@ CONFIGURE_PICOLIBC := \
 	$(CONFIGURE_PICOLIBC_EXTRA)
 
 CONFIGURE_PICOLIBC_NANO := \
-	--cross-file $(srcdir)/crossfiles/$(PICOLIBC_CROSS_FILENAME) \
 	-Dprefix=$(INSTALL_DIR)/$(LIBC)-nano/$(TARGET_TRIPLET) \
 	-Dlibdir=$(INSTALL_DIR)/$(LIBC)-nano/$(TARGET_TRIPLET)/lib \
 	-Dspecsdir=none \
@@ -606,6 +601,7 @@ stamps/build-picolibc-baremetal: $(PICOLIBC_SRCDIR) stamps/build-gcc-stage1-bare
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 	meson setup $(notdir $@) $< \
+		--cross-file $(srcdir)/crossfiles/cross-$(TARGET_CPU).txt \
 		$(CONFIGURE_PICOLIBC)
 	if [ -n "$$PICOLIBC_OBSOLETE_MATH_BLOCK" ]; then \
 		echo "$$PICOLIBC_OBSOLETE_MATH_BLOCK" >> $(notdir $@)/picolibc.h; \
@@ -618,6 +614,7 @@ stamps/build-picolibc-baremetal-tests: $(PICOLIBC_SRCDIR) stamps/build-gcc-stage
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 	meson setup $(notdir $@) $< \
+		--cross-file $(srcdir)/crossfiles/cross-$(TARGET_CPU)-tests.txt \
 		$(CONFIGURE_PICOLIBC) \
 		-Dtests=true \
 		-Dtest-machine=$(WITH_SIM)
@@ -631,6 +628,7 @@ stamps/build-picolibc-nano-baremetal: $(PICOLIBC_SRCDIR) stamps/build-gcc-stage2
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 	meson setup $(notdir $@) $< \
+		--cross-file $(srcdir)/crossfiles/cross-$(TARGET_CPU).txt \
 		$(CONFIGURE_PICOLIBC_NANO)
 	if [ -n "$$PICOLIBC_OBSOLETE_MATH_BLOCK" ]; then \
 		echo "$$PICOLIBC_OBSOLETE_MATH_BLOCK" >> $(notdir $@)/picolibc.h; \
@@ -766,12 +764,6 @@ ifeq ($(FAMILY),arc)
 			-specs=picolibcpp.specs \
 			--crt0=semihost-trap \
 			--oslib=semihost \
-			-Wl,-defsym=__flash=0x0 \
-			-Wl,-defsym=__flash_size=0x80000000 \
-			-Wl,-defsym=__ram=0x80000000 \
-			-Wl,-defsym=__ram_size=0x80000000 \
-			-Wl,-defsym=__heap_size_min=256m \
-			-Wl,-defsym=__stack_size=1024m \
 			-Wl,--no-warn-rwx-segments
 	else
 		$(error Unsupported libc!)
