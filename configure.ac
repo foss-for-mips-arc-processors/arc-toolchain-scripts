@@ -263,6 +263,15 @@ AX_ARG_WITH_SRC(dejagnu, dejagnu)
 AX_ARG_WITH_SRC(qemu, qemu)
 AX_ARG_WITH_SRC(openocd, openocd)
 
+AC_ARG_WITH(arcv-tcf-wrapper-src,
+	[AS_HELP_STRING([--with-arcv-tcf-wrapper-src],
+		[Set arcv-tcf-wrapper source path, default $(srcdir)/src/arcv-tcf-wrapper])],
+	[],
+	[with_arcv_tcf_wrapper_src=default])
+AS_IF([test "x$with_arcv_tcf_wrapper_src" != xdefault],
+	[AC_SUBST(with_arcv_tcf_wrapper_src, [$with_arcv_tcf_wrapper_src])],
+	[AC_SUBST(with_arcv_tcf_wrapper_src, ["\$(srcdir)/src/arcv-tcf-wrapper"])])
+
 AC_ARG_WITH(sim,
 	[AS_HELP_STRING([--with-sim=nsim],
 		[Select a simulator (nsim or qemu)])],

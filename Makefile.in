@@ -19,6 +19,7 @@ PICOLIBC_SRCDIR := @with_picolibc_src@
 DEJAGNU_SRCDIR := @with_dejagnu_src@
 OPENOCD_SRCDIR := @with_openocd_src@
 QEMU_SRCDIR := @with_qemu_src@
+ARCV_TCF_WRAPPER_SRCDIR := @with_arcv_tcf_wrapper_src@
 
 NEED_GCC_EXTERNAL_LIBRARIES := @NEED_GCC_EXTERNAL_LIBRARIES@
 CONFIGURE_HOST := @configure_host@
@@ -131,6 +132,7 @@ PICOLIBC_BRANCH ?= arc-2026.09
 DEJAGNU_BRANCH ?= arc-2026.09
 OPENOCD_BRANCH ?= arc-2026.09
 QEMU_BRANCH ?= ykolerov/future
+ARCV_TCF_WRAPPER_BRANCH ?= arc-2026.09
 
 $(BINUTILS_SRCDIR):
 	mkdir -p $(dir $@)
@@ -171,6 +173,11 @@ $(OPENOCD_SRCDIR):
 	mkdir -p $(dir $@)
 	git clone --depth 1 --single-branch --branch $(OPENOCD_BRANCH) \
 		$(GIT_URL)/openocd.git $@
+
+$(ARCV_TCF_WRAPPER_SRCDIR):
+	mkdir -p $(dir $@)
+	git clone --depth 1 --single-branch --branch $(ARCV_TCF_WRAPPER_BRANCH) \
+		$(GIT_URL)/arcv-tcf-wrapper.git $@
 
 stamps/check-write-permission:
 	mkdir -p $(INSTALL_DIR)/.test || \
@@ -284,7 +291,8 @@ endef
 ifeq ($(FAMILY),arc)
 
 define gcc_install_tcf_wrapper
-	cp -f $(srcdir)/scripts/tcf/arc-tcf-gcc $(INSTALL_DIR)/bin/$(TARGET_TRIPLET)-tcf-gcc
+	cp -f $(srcdir)/scripts/arc-tcf-gcc $(INSTALL_DIR)/bin/$(TARGET_TRIPLET)-tcf-gcc
+	chmod +x $(INSTALL_DIR)/bin/$(TARGET_TRIPLET)-tcf-gcc
 endef
 
 CONFIGURE_GCC_TARGET := \
@@ -299,10 +307,14 @@ CONFIGURE_GCC_MULTILIB := $(MULTILIB_FLAGS) $(MULTILIB_LIST_FLAGS)
 else ifeq ($(FAMILY),riscv)
 
 define gcc_install_tcf_wrapper
-	cp -f $(srcdir)/scripts/tcf/riscv64-gf-elf-buildlib $(INSTALL_DIR)/bin/$(TARGET_TRIPLET)-buildlib
-	cp -f $(srcdir)/scripts/tcf/riscv64-gf-elf-tcf-gcc $(INSTALL_DIR)/bin/$(TARGET_TRIPLET)-tcf-gcc
-	cp -f $(srcdir)/scripts/tcf/arcgnulib.py $(INSTALL_DIR)/bin/arcgnulib.py
+	cp -f $(ARCV_TCF_WRAPPER_SRCDIR)/riscv64-gf-elf-buildlib $(INSTALL_DIR)/bin/$(TARGET_TRIPLET)-buildlib
+	cp -f $(ARCV_TCF_WRAPPER_SRCDIR)/riscv64-gf-elf-tcf-gcc $(INSTALL_DIR)/bin/$(TARGET_TRIPLET)-tcf-gcc
+	cp -f $(ARCV_TCF_WRAPPER_SRCDIR)/arcgnulib.py $(INSTALL_DIR)/bin/arcgnulib.py
+	chmod +x $(INSTALL_DIR)/bin/$(TARGET_TRIPLET)-buildlib \
+		$(INSTALL_DIR)/bin/$(TARGET_TRIPLET)-tcf-gcc
 endef
+
+stamps/build-gcc-stage2-baremetal: $(ARCV_TCF_WRAPPER_SRCDIR)
 
 CONFIGURE_GCC_TARGET := \
 	--enable-tls \

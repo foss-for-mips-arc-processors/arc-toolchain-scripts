@@ -630,6 +630,7 @@ WITH_ABI
 WITH_ARCH
 with_fpu
 with_cpu
+with_arcv_tcf_wrapper_src
 with_openocd_src
 with_qemu_src
 with_dejagnu_src
@@ -745,6 +746,7 @@ with_picolibc_src
 with_dejagnu_src
 with_qemu_src
 with_openocd_src
+with_arcv_tcf_wrapper_src
 with_sim
 '
       ac_precious_vars='build_alias
@@ -1427,6 +1429,9 @@ Optional Packages:
   --with-qemu-src         Set qemu source path, default $(srcdir)/src/qemu
   --with-openocd-src      Set openocd source path, default
                           $(srcdir)/src/openocd
+  --with-arcv-tcf-wrapper-src
+                          Set arcv-tcf-wrapper source path, default
+                          $(srcdir)/src/arcv-tcf-wrapper
   --with-sim=nsim         Select a simulator (nsim or qemu)
 
 Some influential environment variables:
@@ -4418,6 +4423,24 @@ else $as_nop
 fi
 
 	}
+
+
+# Check whether --with-arcv-tcf-wrapper-src was given.
+if test ${with_arcv_tcf_wrapper_src+y}
+then :
+  withval=$with_arcv_tcf_wrapper_src;
+else $as_nop
+  with_arcv_tcf_wrapper_src=default
+fi
+
+if test "x$with_arcv_tcf_wrapper_src" != xdefault
+then :
+  with_arcv_tcf_wrapper_src=$with_arcv_tcf_wrapper_src
+
+else $as_nop
+  with_arcv_tcf_wrapper_src="\$(srcdir)/src/arcv-tcf-wrapper"
+
+fi
 
 
 # Check whether --with-sim was given.
