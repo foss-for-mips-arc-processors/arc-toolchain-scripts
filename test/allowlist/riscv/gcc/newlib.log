@@ -1,0 +1,28 @@
+#
+# Common Newlib (arc-2026.03 release known failures.)
+#
+
+#
+# gcc
+#
+UNRESOLVED: gcc.target/riscv/pr113095.c   -O0  compilation failed to produce executable
+UNRESOLVED: gcc.target/riscv/pr113095.c   -O1  compilation failed to produce executable
+UNRESOLVED: gcc.target/riscv/pr113095.c   -O2  compilation failed to produce executable
+UNRESOLVED: gcc.target/riscv/pr113095.c   -O2 -flto -fno-use-linker-plugin -flto-partition=none  compilation failed to produce executable
+UNRESOLVED: gcc.target/riscv/pr113095.c   -O2 -flto -fuse-linker-plugin -fno-fat-lto-objects  compilation failed to produce executable
+UNRESOLVED: gcc.target/riscv/pr113095.c   -O3 -g  compilation failed to produce executable
+UNRESOLVED: gcc.target/riscv/pr113095.c   -Os  compilation failed to produce executable
+
+#
+# g++
+#
+FAIL: g++.dg/contracts/contracts15.C   output pattern test
+FAIL: g++.dg/coroutines/pr110871.C output pattern test
+FAIL: g++.dg/coroutines/pr110872.C output pattern test
+FAIL: g++.dg/cpp2a/decomp2.C  -std=gnu++11 execution test
+FAIL: g++.dg/cpp2a/decomp2.C  -std=gnu++14 execution test
+FAIL: g++.dg/cpp2a/decomp2.C  -std=gnu++17 execution test
+FAIL: g++.dg/eh/gcsec1.C  -std=gnu++17 execution test
+FAIL: g++.dg/eh/gcsec1.C  -std=gnu++26 execution test
+FAIL: g++.dg/eh/gcsec1.C  -std=gnu++98 execution test
+

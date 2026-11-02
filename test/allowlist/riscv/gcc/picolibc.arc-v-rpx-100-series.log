@@ -1,0 +1,110 @@
+#
+# ARC-V RPX-100 (arc-2026.03 release known failures.)
+#
+
+#
+# gcc
+#
+ERROR: /SCRATCH/arcjenkins2-1/slaves/us01-odc-custom-arcoss1/workspace/arcoss_verification/arc_gnu_toolchain_verification/baremetal_tests-55/sources/src/gcc/gcc/testsuite/gcc.dg/lto/20081212-1_0.c: error executing dg-final: expected boolean value but got ""
+FAIL: gcc.dg/torture/pr107115.c   -O2  execution test
+FAIL: gcc.dg/torture/pr107115.c   -O3 -g  execution test
+FAIL: gcc.dg/vect/pr65310.c -flto -ffat-lto-objects  scan-tree-dump vect "can't force alignment"
+FAIL: gcc.dg/vect/pr65310.c -flto -ffat-lto-objects  scan-tree-dump-not vect "misalign = 0"
+FAIL: gcc.dg/vect/pr65310.c scan-tree-dump vect "can't force alignment"
+FAIL: gcc.dg/vect/pr65310.c scan-tree-dump-not vect "misalign = 0"
+FAIL: gcc.dg/vect/pr88598-1.c -flto -ffat-lto-objects  scan-tree-dump-not optimized "REDUC_PLUS"
+FAIL: gcc.dg/vect/pr88598-1.c scan-tree-dump-not optimized "REDUC_PLUS"
+FAIL: gcc.dg/vect/pr88598-2.c -flto -ffat-lto-objects  scan-tree-dump-not optimized "REDUC_PLUS"
+FAIL: gcc.dg/vect/pr88598-2.c scan-tree-dump-not optimized "REDUC_PLUS"
+FAIL: gcc.dg/vect/pr88598-3.c -flto -ffat-lto-objects  scan-tree-dump-not optimized "REDUC_PLUS"
+FAIL: gcc.dg/vect/pr88598-3.c scan-tree-dump-not optimized "REDUC_PLUS"
+FAIL: gcc.dg/vect/vect-gather-2.c -flto -ffat-lto-objects  scan-tree-dump vect "different gather base"
+FAIL: gcc.dg/vect/vect-gather-2.c -flto -ffat-lto-objects  scan-tree-dump vect "different gather scale"
+FAIL: gcc.dg/vect/vect-gather-2.c scan-tree-dump vect "different gather base"
+FAIL: gcc.dg/vect/vect-gather-2.c scan-tree-dump vect "different gather scale"
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=dynamic  scan-assembler-times \\tvfadd\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=dynamic  scan-assembler-times \\tvfadd\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=m1  scan-assembler-times \\tvfadd\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=m1  scan-assembler-times \\tvfadd\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=m2  scan-assembler-times \\tvfadd\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=m2  scan-assembler-times \\tvfadd\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=m4  scan-assembler-times \\tvfadd\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=m4  scan-assembler-times \\tvfadd\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=m8  scan-assembler-times \\tvfadd\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=m8  scan-assembler-times \\tvfadd\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=dynamic  scan-assembler-times \\tvfadd\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=dynamic  scan-assembler-times \\tvfadd\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=m1  scan-assembler-times \\tvfadd\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=m1  scan-assembler-times \\tvfadd\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=m2  scan-assembler-times \\tvfadd\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=m2  scan-assembler-times \\tvfadd\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=m4  scan-assembler-times \\tvfadd\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=m4  scan-assembler-times \\tvfadd\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=m8  scan-assembler-times \\tvfadd\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vadd-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=m8  scan-assembler-times \\tvfadd\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=dynamic  scan-assembler-times \\tvfrsub\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=dynamic  scan-assembler-times \\tvfsub\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=m1  scan-assembler-times \\tvfrsub\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=m1  scan-assembler-times \\tvfsub\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=m2  scan-assembler-times \\tvfrsub\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=m2  scan-assembler-times \\tvfsub\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=m4  scan-assembler-times \\tvfrsub\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=m4  scan-assembler-times \\tvfsub\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=m8  scan-assembler-times \\tvfrsub\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O2 -mrvv-max-lmul=m8  scan-assembler-times \\tvfsub\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=dynamic  scan-assembler-times \\tvfrsub\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=dynamic  scan-assembler-times \\tvfsub\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=m1  scan-assembler-times \\tvfrsub\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=m1  scan-assembler-times \\tvfsub\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=m2  scan-assembler-times \\tvfrsub\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=m2  scan-assembler-times \\tvfsub\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=m4  scan-assembler-times \\tvfrsub\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=m4  scan-assembler-times \\tvfsub\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=m8  scan-assembler-times \\tvfrsub\\.vf 6
+FAIL: gcc.target/riscv/rvv/autovec/binop/vsub-rv64gcv-nofm.c -ftree-vectorize -O3 -mrvv-max-lmul=m8  scan-assembler-times \\tvfsub\\.vv 3
+FAIL: gcc.target/riscv/rvv/autovec/pr113206-2.c -O3 -ftree-vectorize  scan-assembler-times li\\s+[a-x0-9]+,\\s*32 1
+FAIL: gcc.target/riscv/rvv/autovec/pr113206-2.c -O3 -ftree-vectorize  scan-assembler-times vsetvli 1
+FAIL: gcc.target/riscv/rvv/autovec/pr116059.c -O3 -ftree-vectorize execution test
+FAIL: gcc.target/riscv/rvv/autovec/pr117383.c -O3 -ftree-vectorize execution test
+FAIL: gcc.target/riscv/rvv/autovec/unop/popcount-run-1.c -ftree-vectorize -O2 -mrvv-max-lmul=dynamic execution test
+FAIL: gcc.target/riscv/rvv/autovec/unop/popcount-run-1.c -ftree-vectorize -O2 -mrvv-max-lmul=m4 execution test
+FAIL: gcc.target/riscv/rvv/autovec/unop/popcount-run-1.c -ftree-vectorize -O2 -mrvv-max-lmul=m8 execution test
+FAIL: gcc.target/riscv/rvv/autovec/unop/popcount-run-1.c -ftree-vectorize -O3 -mrvv-max-lmul=dynamic execution test
+FAIL: gcc.target/riscv/rvv/autovec/unop/popcount-run-1.c -ftree-vectorize -O3 -mrvv-max-lmul=m4 execution test
+FAIL: gcc.target/riscv/rvv/autovec/unop/popcount-run-1.c -ftree-vectorize -O3 -mrvv-max-lmul=m8 execution test
+FAIL: gcc.target/riscv/rvv/autovec/vls-vlmax/shuffle-evenodd-run.c -std=c99 -O3 -ftree-vectorize -mrvv-vector-bits=zvl execution test
+FAIL: gcc.target/riscv/rvv/autovec/vls-vlmax/shuffle-slide-run.c -std=c99 -O3 -ftree-vectorize -mrvv-vector-bits=zvl execution test
+FAIL: gcc.target/riscv/rvv/base/cpymem-1.c check-function-bodies f3
+FAIL: gcc.target/riscv/rvv/base/cpymem-2.c check-function-bodies f1
+FAIL: gcc.target/riscv/rvv/xtheadvector/pr114194-rv64.c check-function-bodies foo0_7
+FAIL: gcc.target/riscv/rvv/xtheadvector/pr114194-rv64.c check-function-bodies foo1_5
+FAIL: gcc.target/riscv/tlsdesc.c   -O0   scan-assembler-times ld\t[a-x0-9]+,%tlsdesc_load_lo 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O1   scan-assembler-times ld\t[a-x0-9]+,%tlsdesc_load_lo 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O2   scan-assembler-times ld\t[a-x0-9]+,%tlsdesc_load_lo 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O2 -flto -fno-use-linker-plugin -flto-partition=none   scan-assembler-times ld\t[a-x0-9]+,%tlsdesc_load_lo 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O2 -flto -fuse-linker-plugin -fno-fat-lto-objects   scan-assembler-times ld\t[a-x0-9]+,%tlsdesc_load_lo 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O3 -g   scan-assembler-times ld\t[a-x0-9]+,%tlsdesc_load_lo 1
+FAIL: gcc.target/riscv/tlsdesc.c   -Os   scan-assembler-times ld\t[a-x0-9]+,%tlsdesc_load_lo 1
+FAIL: gcc.target/riscv/xtheadmac-mula-muls.c   -O2   scan-assembler-times th.mulah\t 1
+FAIL: gcc.target/riscv/xtheadmac-mula-muls.c   -O2   scan-assembler-times th.mulaw\t 1
+FAIL: gcc.target/riscv/xtheadmac-mula-muls.c   -O2 -flto -fno-use-linker-plugin -flto-partition=none   scan-assembler-times th.mulah\t 1
+FAIL: gcc.target/riscv/xtheadmac-mula-muls.c   -O2 -flto -fno-use-linker-plugin -flto-partition=none   scan-assembler-times th.mulaw\t 1
+FAIL: gcc.target/riscv/xtheadmac-mula-muls.c   -O2 -flto -fuse-linker-plugin -fno-fat-lto-objects   scan-assembler-times th.mulah\t 1
+FAIL: gcc.target/riscv/xtheadmac-mula-muls.c   -O2 -flto -fuse-linker-plugin -fno-fat-lto-objects   scan-assembler-times th.mulaw\t 1
+FAIL: gcc.target/riscv/xtheadmac-mula-muls.c   -O3 -g   scan-assembler-times th.mulah\t 1
+FAIL: gcc.target/riscv/xtheadmac-mula-muls.c   -O3 -g   scan-assembler-times th.mulaw\t 1
+FAIL: gcc.target/riscv/xtheadmac-mula-muls.c   -Os   scan-assembler-times th.mulah\t 1
+FAIL: gcc.target/riscv/xtheadmac-mula-muls.c   -Os   scan-assembler-times th.mulaw\t 1
+UNRESOLVED: /SCRATCH/arcjenkins2-1/slaves/us01-odc-custom-arcoss1/workspace/arcoss_verification/arc_gnu_toolchain_verification/baremetal_tests-55/sources/src/gcc/gcc/testsuite/gcc.dg/lto/20081212-1_0.c: error executing dg-final: expected boolean value but got ""
+UNRESOLVED: gcc.dg/pr108139.c scan-tree-dump-not vrp2 "Folding predicate"
+
+# Failure due to -mcmodel=medany
+# Test case introduced in gcc/commit/83893a498ed39de5f46a872a94892fa3507a9148
+#   [PATCH] RISC-V: Don't emit cm.popret when zcmp + zicfiss is enabled [PR125217]
+FAIL: gcc.target/riscv/ssp-zcmp.c   -Os   check-function-bodies printSomething
+
+#
+# g++
+#
+FAIL: g++.dg/modules/pr105169 link
+FAIL: g++.dg/tree-ssa/copyprop.C   (test for excess errors)

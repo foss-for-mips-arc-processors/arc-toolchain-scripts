@@ -1,0 +1,245 @@
+#
+# Common Picolibc (arc-2026.03 release known failures.)
+#
+
+#
+# gcc
+#
+FAIL: c-c++-common/analyzer/isatty-1.c  (test for warnings, line 32)
+FAIL: c-c++-common/analyzer/isatty-1.c  (test for warnings, line 47)
+FAIL: c-c++-common/analyzer/isatty-1.c  (test for warnings, line 57)
+FAIL: c-c++-common/analyzer/isatty-1.c (test for excess errors)
+FAIL: gcc.c-torture/execute/960521-1.c   -O0  execution test
+FAIL: gcc.c-torture/execute/960521-1.c   -O1  execution test
+FAIL: gcc.c-torture/execute/960521-1.c   -O2  execution test
+FAIL: gcc.c-torture/execute/960521-1.c   -O2 -flto -fno-use-linker-plugin -flto-partition=none  execution test
+FAIL: gcc.c-torture/execute/960521-1.c   -O2 -flto -fuse-linker-plugin -fno-fat-lto-objects  execution test
+FAIL: gcc.c-torture/execute/960521-1.c   -O3 -fomit-frame-pointer -funroll-loops -fpeel-loops -ftracer -finline-functions  execution test
+FAIL: gcc.c-torture/execute/960521-1.c   -O3 -g  execution test
+FAIL: gcc.c-torture/execute/960521-1.c   -Os  execution test
+FAIL: gcc.c-torture/execute/memcpy-1.c   -O0  execution test
+FAIL: gcc.c-torture/execute/memcpy-1.c   -O1  execution test
+FAIL: gcc.c-torture/execute/memcpy-1.c   -O2  execution test
+FAIL: gcc.c-torture/execute/memcpy-1.c   -O2 -flto -fno-use-linker-plugin -flto-partition=none  execution test
+FAIL: gcc.c-torture/execute/memcpy-1.c   -O2 -flto -fuse-linker-plugin -fno-fat-lto-objects  execution test
+FAIL: gcc.c-torture/execute/memcpy-1.c   -O3 -fomit-frame-pointer -funroll-loops -fpeel-loops -ftracer -finline-functions  execution test
+FAIL: gcc.c-torture/execute/memcpy-1.c   -O3 -g  execution test
+FAIL: gcc.c-torture/execute/memcpy-1.c   -Os  execution test
+FAIL: gcc.c-torture/execute/pr28982b.c   -O0  execution test
+FAIL: gcc.c-torture/execute/pr28982b.c   -O1  execution test
+FAIL: gcc.c-torture/execute/pr28982b.c   -O2  execution test
+FAIL: gcc.c-torture/execute/pr28982b.c   -O2 -flto -fno-use-linker-plugin -flto-partition=none  execution test
+FAIL: gcc.c-torture/execute/pr28982b.c   -O2 -flto -fuse-linker-plugin -fno-fat-lto-objects  execution test
+FAIL: gcc.c-torture/execute/pr28982b.c   -O3 -fomit-frame-pointer -funroll-loops -fpeel-loops -ftracer -finline-functions  execution test
+FAIL: gcc.c-torture/execute/pr28982b.c   -O3 -g  execution test
+FAIL: gcc.c-torture/execute/pr28982b.c   -Os  execution test
+FAIL: gcc.dg/lto/20081120-1 c_lto_20081120-1_0.o-c_lto_20081120-1_1.o link, -flto -r -nostdlib
+FAIL: gcc.dg/lto/20081120-2 c_lto_20081120-2_0.o-c_lto_20081120-2_1.o link, -flto -flto-partition=1to1 -r -nostdlib
+FAIL: gcc.dg/lto/20081204-1 c_lto_20081204-1_0.o-c_lto_20081204-1_1.o link, -flto -flto-partition=1to1 -fPIC -r -nostdlib
+FAIL: gcc.dg/lto/20081212-1 c_lto_20081212-1_0.o-c_lto_20081212-1_0.o link, -r -nostdlib
+FAIL: gcc.dg/lto/20081224 c_lto_20081224_0.o-c_lto_20081224_1.o link, -flto -flto-partition=1to1 -r -nostdlib -fPIC
+FAIL: gcc.dg/lto/20090116 c_lto_20090116_0.o-c_lto_20090116_0.o link, -O1 -flto -flto-partition=1to1 -fPIC
+FAIL: gcc.dg/lto/20090126-1 c_lto_20090126-1_0.o-c_lto_20090126-1_0.o link, -O0 -flto -flto-partition=1to1
+FAIL: gcc.dg/lto/20090126-2 c_lto_20090126-2_0.o-c_lto_20090126-2_0.o link, -fPIC -O2 -flto -flto-partition=1to1
+FAIL: gcc.dg/lto/20090219 c_lto_20090219_0.o-c_lto_20090219_0.o link, -O3 -flto -flto-partition=1to1 -fPIC -r -nostdlib
+FAIL: gcc.dg/lto/20091013-1 c_lto_20091013-1_0.o-c_lto_20091013-1_2.o link, -fPIC -r -nostdlib -O2 -flto
+FAIL: gcc.dg/lto/20091013-1 c_lto_20091013-1_0.o-c_lto_20091013-1_2.o link, -fPIC -r -nostdlib -flto
+FAIL: gcc.dg/lto/20091014-1 c_lto_20091014-1_0.o-c_lto_20091014-1_0.o link, -fPIC -r -nostdlib -flto
+FAIL: gcc.dg/lto/20091015-1 c_lto_20091015-1_0.o-c_lto_20091015-1_2.o link, -fPIC -r -nostdlib -O2 -flto
+FAIL: gcc.dg/lto/20091015-1 c_lto_20091015-1_0.o-c_lto_20091015-1_2.o link, -fPIC -r -nostdlib -O2 -flto -flto-partition=1to1
+FAIL: gcc.dg/lto/20091016-1 c_lto_20091016-1_0.o-c_lto_20091016-1_1.o link, -fPIC -r -nostdlib -O2 -flto
+FAIL: gcc.dg/lto/20091020-1 c_lto_20091020-1_0.o-c_lto_20091020-1_1.o link, -fPIC -r -nostdlib -flto
+FAIL: gcc.dg/lto/20091020-2 c_lto_20091020-2_0.o-c_lto_20091020-2_1.o link, -fPIC -r -nostdlib -flto
+FAIL: gcc.dg/lto/20091027-1 c_lto_20091027-1_0.o-c_lto_20091027-1_1.o link, -O0 -flto -flto-partition=1to1 -fno-use-linker-plugin
+FAIL: gcc.dg/lto/20091027-1 c_lto_20091027-1_0.o-c_lto_20091027-1_1.o link, -O0 -flto -flto-partition=none -fuse-linker-plugin
+FAIL: gcc.dg/lto/20091027-1 c_lto_20091027-1_0.o-c_lto_20091027-1_1.o link, -O0 -flto -fuse-linker-plugin -fno-fat-lto-objects
+FAIL: gcc.dg/lto/20091027-1 c_lto_20091027-1_0.o-c_lto_20091027-1_1.o link, -O2 -flto -flto-partition=1to1 -fno-use-linker-plugin
+FAIL: gcc.dg/lto/20091027-1 c_lto_20091027-1_0.o-c_lto_20091027-1_1.o link, -O2 -flto -flto-partition=none -fuse-linker-plugin -fno-fat-lto-objects
+FAIL: gcc.dg/lto/20091027-1 c_lto_20091027-1_0.o-c_lto_20091027-1_1.o link, -O2 -flto -fuse-linker-plugin
+FAIL: gcc.dg/lto/20100426 c_lto_20100426_0.o-c_lto_20100426_0.o link, -r -nostdlib -flto -g
+FAIL: gcc.dg/lto/20100603-1 c_lto_20100603-1_0.o-c_lto_20100603-1_0.o link, -O0 -flto -flto-partition=1to1 -fno-use-linker-plugin
+FAIL: gcc.dg/lto/20100603-1 c_lto_20100603-1_0.o-c_lto_20100603-1_0.o link, -O0 -flto -flto-partition=none -fuse-linker-plugin
+FAIL: gcc.dg/lto/20100603-1 c_lto_20100603-1_0.o-c_lto_20100603-1_0.o link, -O0 -flto -fuse-linker-plugin -fno-fat-lto-objects
+FAIL: gcc.dg/lto/20100603-1 c_lto_20100603-1_0.o-c_lto_20100603-1_0.o link, -O2 -flto -flto-partition=1to1 -fno-use-linker-plugin
+FAIL: gcc.dg/lto/20100603-1 c_lto_20100603-1_0.o-c_lto_20100603-1_0.o link, -O2 -flto -flto-partition=none -fuse-linker-plugin -fno-fat-lto-objects
+FAIL: gcc.dg/lto/20100603-1 c_lto_20100603-1_0.o-c_lto_20100603-1_0.o link, -O2 -flto -fuse-linker-plugin
+FAIL: gcc.dg/lto/20100603-2 c_lto_20100603-2_0.o-c_lto_20100603-2_0.o link, -O0 -flto -flto-partition=1to1 -fno-use-linker-plugin
+FAIL: gcc.dg/lto/20100603-2 c_lto_20100603-2_0.o-c_lto_20100603-2_0.o link, -O0 -flto -flto-partition=none -fuse-linker-plugin
+FAIL: gcc.dg/lto/20100603-2 c_lto_20100603-2_0.o-c_lto_20100603-2_0.o link, -O0 -flto -fuse-linker-plugin -fno-fat-lto-objects
+FAIL: gcc.dg/lto/20100603-2 c_lto_20100603-2_0.o-c_lto_20100603-2_0.o link, -O2 -flto -flto-partition=1to1 -fno-use-linker-plugin
+FAIL: gcc.dg/lto/20100603-2 c_lto_20100603-2_0.o-c_lto_20100603-2_0.o link, -O2 -flto -flto-partition=none -fuse-linker-plugin -fno-fat-lto-objects
+FAIL: gcc.dg/lto/20100603-2 c_lto_20100603-2_0.o-c_lto_20100603-2_0.o link, -O2 -flto -fuse-linker-plugin
+FAIL: gcc.dg/lto/20100603-3 c_lto_20100603-3_0.o-c_lto_20100603-3_0.o link, -O0 -flto -flto-partition=1to1 -fno-use-linker-plugin
+FAIL: gcc.dg/lto/20100603-3 c_lto_20100603-3_0.o-c_lto_20100603-3_0.o link, -O0 -flto -flto-partition=none -fuse-linker-plugin
+FAIL: gcc.dg/lto/20100603-3 c_lto_20100603-3_0.o-c_lto_20100603-3_0.o link, -O0 -flto -fuse-linker-plugin -fno-fat-lto-objects
+FAIL: gcc.dg/lto/20100603-3 c_lto_20100603-3_0.o-c_lto_20100603-3_0.o link, -O2 -flto -flto-partition=1to1 -fno-use-linker-plugin
+FAIL: gcc.dg/lto/20100603-3 c_lto_20100603-3_0.o-c_lto_20100603-3_0.o link, -O2 -flto -flto-partition=none -fuse-linker-plugin -fno-fat-lto-objects
+FAIL: gcc.dg/lto/20100603-3 c_lto_20100603-3_0.o-c_lto_20100603-3_0.o link, -O2 -flto -fuse-linker-plugin
+FAIL: gcc.dg/lto/20111213-1 c_lto_20111213-1_0.o-c_lto_20111213-1_0.o link,  -flto -g
+FAIL: gcc.dg/lto/pr45736 c_lto_pr45736_0.o-c_lto_pr45736_0.o link, -flto -r -O
+FAIL: gcc.dg/lto/pr52634 c_lto_pr52634_0.o-c_lto_pr52634_1.o link,  -flto -r -flto-partition=1to1
+FAIL: gcc.dg/lto/pr54702 c_lto_pr54702_0.o-c_lto_pr54702_1.o link,  -O2 -flto -w
+FAIL: gcc.dg/lto/pr59323 c_lto_pr59323_0.o-c_lto_pr59323_0.o link,  -O2 -g -flto
+FAIL: gcc.dg/lto/pr59323-2 c_lto_pr59323-2_0.o-c_lto_pr59323-2_0.o link,  -O2 -g -flto
+FAIL: gcc.dg/lto/pr60820 c_lto_pr60820_0.o-c_lto_pr60820_1.o link, -flto -r -nostdlib -O2
+FAIL: gcc.dg/lto/pr81406 c_lto_pr81406_0.o-c_lto_pr81406_0.o link,  -O2 -g -flto
+FAIL: gcc.dg/lto/pr83388 c_lto_pr83388_0.o-c_lto_pr83388_0.o link,  -O0 -flto -fsanitize=null
+FAIL: gcc.dg/lto/pr83388 c_lto_pr83388_0.o-c_lto_pr83388_0.o link,  -O2 -flto -fsanitize=null
+FAIL: gcc.dg/lto/pr85870 c_lto_pr85870_0.o-c_lto_pr85870_1.o link,  -flto -O2
+FAIL: gcc.dg/tls/vis-attr-hidden.c scan-ipa-dump whole-program "Varpool flags: tls-local-dynamic"
+FAIL: gcc.dg/tls/vis-flag-hidden.c scan-ipa-dump whole-program "Varpool flags: tls-local-dynamic"
+FAIL: gcc.dg/tls/vis-pragma-hidden.c scan-ipa-dump whole-program "Varpool flags: tls-local-dynamic"
+FAIL: gcc.target/riscv/pr113095.c   -O0  execution test
+FAIL: gcc.target/riscv/pr113095.c   -O1  execution test
+FAIL: gcc.target/riscv/pr113095.c   -O2  execution test
+FAIL: gcc.target/riscv/pr113095.c   -O2 -flto -fno-use-linker-plugin -flto-partition=none  execution test
+FAIL: gcc.target/riscv/pr113095.c   -O2 -flto -fuse-linker-plugin -fno-fat-lto-objects  execution test
+FAIL: gcc.target/riscv/pr113095.c   -O3 -g  execution test
+FAIL: gcc.target/riscv/pr113095.c   -Os  execution test
+FAIL: gcc.target/riscv/round.c   -O0  (test for excess errors)
+FAIL: gcc.target/riscv/round.c   -O1  (test for excess errors)
+FAIL: gcc.target/riscv/round.c   -O2  (test for excess errors)
+FAIL: gcc.target/riscv/round.c   -O2 -flto -fno-use-linker-plugin -flto-partition=none  (test for excess errors)
+FAIL: gcc.target/riscv/round.c   -O2 -flto -fuse-linker-plugin -fno-fat-lto-objects  (test for excess errors)
+FAIL: gcc.target/riscv/round.c   -O3 -g  (test for excess errors)
+FAIL: gcc.target/riscv/round.c   -Os  (test for excess errors)
+FAIL: gcc.target/riscv/tlsdesc.c   -O0   scan-assembler-times addi\ta0,[a-x0-9]+,%tlsdesc_add_lo 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O0   scan-assembler-times auipc\t[a-x0-9]+,%tlsdesc_hi 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O0   scan-assembler-times jalr\tt0,[a-x0-9]+,%tlsdesc_call 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O0   scan-assembler-times lw\t[a-x0-9]+,%tlsdesc_load_lo 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O1   scan-assembler-times addi\ta0,[a-x0-9]+,%tlsdesc_add_lo 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O1   scan-assembler-times auipc\t[a-x0-9]+,%tlsdesc_hi 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O1   scan-assembler-times jalr\tt0,[a-x0-9]+,%tlsdesc_call 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O1   scan-assembler-times lw\t[a-x0-9]+,%tlsdesc_load_lo 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O2   scan-assembler-times addi\ta0,[a-x0-9]+,%tlsdesc_add_lo 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O2   scan-assembler-times auipc\t[a-x0-9]+,%tlsdesc_hi 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O2   scan-assembler-times jalr\tt0,[a-x0-9]+,%tlsdesc_call 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O2   scan-assembler-times lw\t[a-x0-9]+,%tlsdesc_load_lo 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O2 -flto -fno-use-linker-plugin -flto-partition=none   scan-assembler-times addi\ta0,[a-x0-9]+,%tlsdesc_add_lo 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O2 -flto -fno-use-linker-plugin -flto-partition=none   scan-assembler-times auipc\t[a-x0-9]+,%tlsdesc_hi 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O2 -flto -fno-use-linker-plugin -flto-partition=none   scan-assembler-times jalr\tt0,[a-x0-9]+,%tlsdesc_call 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O2 -flto -fno-use-linker-plugin -flto-partition=none   scan-assembler-times lw\t[a-x0-9]+,%tlsdesc_load_lo 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O2 -flto -fuse-linker-plugin -fno-fat-lto-objects   scan-assembler-times addi\ta0,[a-x0-9]+,%tlsdesc_add_lo 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O2 -flto -fuse-linker-plugin -fno-fat-lto-objects   scan-assembler-times auipc\t[a-x0-9]+,%tlsdesc_hi 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O2 -flto -fuse-linker-plugin -fno-fat-lto-objects   scan-assembler-times jalr\tt0,[a-x0-9]+,%tlsdesc_call 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O2 -flto -fuse-linker-plugin -fno-fat-lto-objects   scan-assembler-times lw\t[a-x0-9]+,%tlsdesc_load_lo 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O3 -g   scan-assembler-times addi\ta0,[a-x0-9]+,%tlsdesc_add_lo 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O3 -g   scan-assembler-times auipc\t[a-x0-9]+,%tlsdesc_hi 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O3 -g   scan-assembler-times jalr\tt0,[a-x0-9]+,%tlsdesc_call 1
+FAIL: gcc.target/riscv/tlsdesc.c   -O3 -g   scan-assembler-times lw\t[a-x0-9]+,%tlsdesc_load_lo 1
+FAIL: gcc.target/riscv/tlsdesc.c   -Os   scan-assembler-times addi\ta0,[a-x0-9]+,%tlsdesc_add_lo 1
+FAIL: gcc.target/riscv/tlsdesc.c   -Os   scan-assembler-times auipc\t[a-x0-9]+,%tlsdesc_hi 1
+FAIL: gcc.target/riscv/tlsdesc.c   -Os   scan-assembler-times jalr\tt0,[a-x0-9]+,%tlsdesc_call 1
+FAIL: gcc.target/riscv/tlsdesc.c   -Os   scan-assembler-times lw\t[a-x0-9]+,%tlsdesc_load_lo 1
+FAIL: scan-symbol exported_var: output file does not exist
+
+#
+# g++
+#
+FAIL: c-c++-common/analyzer/errno-1.c  -std=c++17  (test for warnings, line 20)
+FAIL: c-c++-common/analyzer/errno-1.c  -std=c++17 (test for excess errors)
+FAIL: c-c++-common/analyzer/errno-1.c  -std=c++26  (test for warnings, line 20)
+FAIL: c-c++-common/analyzer/errno-1.c  -std=c++26 (test for excess errors)
+FAIL: c-c++-common/analyzer/flex-without-call-summaries.c  -std=c++17 (test for excess errors)
+FAIL: c-c++-common/analyzer/flex-without-call-summaries.c  -std=c++26 (test for excess errors)
+FAIL: c-c++-common/analyzer/isatty-1.c  -std=c++17  (test for warnings, line 32)
+FAIL: c-c++-common/analyzer/isatty-1.c  -std=c++17  (test for warnings, line 36)
+FAIL: c-c++-common/analyzer/isatty-1.c  -std=c++17  (test for warnings, line 47)
+FAIL: c-c++-common/analyzer/isatty-1.c  -std=c++17  (test for warnings, line 57)
+FAIL: c-c++-common/analyzer/isatty-1.c  -std=c++17 (test for excess errors)
+FAIL: c-c++-common/analyzer/isatty-1.c  -std=c++26  (test for warnings, line 32)
+FAIL: c-c++-common/analyzer/isatty-1.c  -std=c++26  (test for warnings, line 36)
+FAIL: c-c++-common/analyzer/isatty-1.c  -std=c++26  (test for warnings, line 47)
+FAIL: c-c++-common/analyzer/isatty-1.c  -std=c++26  (test for warnings, line 57)
+FAIL: c-c++-common/analyzer/isatty-1.c  -std=c++26 (test for excess errors)
+FAIL: c-c++-common/analyzer/isatty-1.c  -std=c++98  (test for warnings, line 32)
+FAIL: c-c++-common/analyzer/isatty-1.c  -std=c++98  (test for warnings, line 47)
+FAIL: c-c++-common/analyzer/isatty-1.c  -std=c++98  (test for warnings, line 57)
+FAIL: c-c++-common/analyzer/isatty-1.c  -std=c++98 (test for excess errors)
+FAIL: g++.dg/lto/20081109-1 cp_lto_20081109-1_0.o-cp_lto_20081109-1_0.o link, -fPIC -flto -flto-partition=1to1
+FAIL: g++.dg/lto/20081118 cp_lto_20081118_0.o-cp_lto_20081118_1.o link, -fPIC -flto -flto-partition=1to1 -r -nostdlib
+FAIL: g++.dg/lto/20081119-1 cp_lto_20081119-1_0.o-cp_lto_20081119-1_1.o link, -fPIC -flto -flto-partition=1to1 -r -nostdlib
+FAIL: g++.dg/lto/20081120-1 cp_lto_20081120-1_0.o-cp_lto_20081120-1_1.o link, -flto -r -nostdlib
+FAIL: g++.dg/lto/20081120-2 cp_lto_20081120-2_0.o-cp_lto_20081120-2_1.o link, -flto -r -nostdlib
+FAIL: g++.dg/lto/20081123 cp_lto_20081123_0.o-cp_lto_20081123_1.o link, -flto -flto-partition=1to1 -r -nostdlib -fPIC
+FAIL: g++.dg/lto/20081204-1 cp_lto_20081204-1_0.o-cp_lto_20081204-1_1.o link, -flto -flto-partition=1to1 -fPIC -r -nostdlib
+FAIL: g++.dg/lto/20090302 cp_lto_20090302_0.o-cp_lto_20090302_1.o link, -fPIC -flto -flto-partition=1to1 -r
+FAIL: g++.dg/lto/20090313 cp_lto_20090313_0.o-cp_lto_20090313_1.o link, -flto -flto-partition=1to1 -fPIC
+FAIL: g++.dg/lto/20091002-2 cp_lto_20091002-2_0.o-cp_lto_20091002-2_0.o link, -fPIC
+FAIL: g++.dg/lto/20091002-3 cp_lto_20091002-3_0.o-cp_lto_20091002-3_0.o link, -fPIC
+FAIL: g++.dg/lto/20091026-1 cp_lto_20091026-1_0.o-cp_lto_20091026-1_1.o link, -O0 -flto -flto-partition=1to1 -fno-use-linker-plugin
+FAIL: g++.dg/lto/20091026-1 cp_lto_20091026-1_0.o-cp_lto_20091026-1_1.o link, -O0 -flto -flto-partition=none -fuse-linker-plugin
+FAIL: g++.dg/lto/20091026-1 cp_lto_20091026-1_0.o-cp_lto_20091026-1_1.o link, -O0 -flto -fuse-linker-plugin -fno-fat-lto-objects
+FAIL: g++.dg/lto/20091026-1 cp_lto_20091026-1_0.o-cp_lto_20091026-1_1.o link, -O2 -flto -flto-partition=1to1 -fno-use-linker-plugin
+FAIL: g++.dg/lto/20091026-1 cp_lto_20091026-1_0.o-cp_lto_20091026-1_1.o link, -O2 -flto -flto-partition=none -fuse-linker-plugin -fno-fat-lto-objects
+FAIL: g++.dg/lto/20091026-1 cp_lto_20091026-1_0.o-cp_lto_20091026-1_1.o link, -O2 -flto -fuse-linker-plugin
+FAIL: g++.dg/lto/20100724-1 cp_lto_20100724-1_0.o-cp_lto_20100724-1_0.o link, -ftoplevel-reorder -flto -flto-partition=1to1
+FAIL: g++.dg/lto/20100724-1 cp_lto_20100724-1_0.o-cp_lto_20100724-1_0.o link, -ftoplevel-reorder -flto -flto-partition=none
+FAIL: g++.dg/lto/20101010-4 cp_lto_20101010-4_0.o-cp_lto_20101010-4_0.o link,  -std=c++0x -flto -g -r -nostdlib
+FAIL: g++.dg/lto/20101010-4 cp_lto_20101010-4_0.o-cp_lto_20101010-4_0.o link,  -std=c++0x -flto -r -nostdlib
+FAIL: g++.dg/lto/20101015-2 cp_lto_20101015-2_0.o-cp_lto_20101015-2_0.o link,  -flto
+FAIL: g++.dg/lto/20101015-2 cp_lto_20101015-2_0.o-cp_lto_20101015-2_0.o link,  -g -flto
+FAIL: g++.dg/lto/20110311-1 cp_lto_20110311-1_0.o-cp_lto_20110311-1_0.o link, -O0 -flto -flto-partition=1to1 -fno-use-linker-plugin
+FAIL: g++.dg/lto/20110311-1 cp_lto_20110311-1_0.o-cp_lto_20110311-1_0.o link, -O0 -flto -flto-partition=none -fuse-linker-plugin
+FAIL: g++.dg/lto/20110311-1 cp_lto_20110311-1_0.o-cp_lto_20110311-1_0.o link, -O0 -flto -fuse-linker-plugin -fno-fat-lto-objects
+FAIL: g++.dg/lto/20110311-1 cp_lto_20110311-1_0.o-cp_lto_20110311-1_0.o link, -O2 -flto -flto-partition=1to1 -fno-use-linker-plugin
+FAIL: g++.dg/lto/20110311-1 cp_lto_20110311-1_0.o-cp_lto_20110311-1_0.o link, -O2 -flto -flto-partition=none -fuse-linker-plugin -fno-fat-lto-objects
+FAIL: g++.dg/lto/20110311-1 cp_lto_20110311-1_0.o-cp_lto_20110311-1_0.o link, -O2 -flto -fuse-linker-plugin
+FAIL: g++.dg/lto/devirt-19 cp_lto_devirt-19_0.o-cp_lto_devirt-19_0.o link, -O2 -fdump-ipa-cp -fipa-cp-clone -Wno-return-type -flto -r -nostdlib
+FAIL: g++.dg/lto/devirt-22 cp_lto_devirt-22_0.o-cp_lto_devirt-22_0.o link, -O3 -fno-early-inlining -fno-ipa-sra -fdump-ipa-cp -flto -r -nostdlib
+FAIL: g++.dg/lto/devirt-30 cp_lto_devirt-30_0.o-cp_lto_devirt-30_0.o link, -O3 -fdump-ipa-devirt -flto -r -nostdlib
+FAIL: g++.dg/lto/devirt-34 cp_lto_devirt-34_0.o-cp_lto_devirt-34_0.o link, -O2 -fdump-ipa-devirt -flto -r -nostdlib
+FAIL: g++.dg/lto/pr113208 cp_lto_pr113208_0.o-cp_lto_pr113208_1.o link, -O1 -std=c++20 -flto
+FAIL: g++.dg/lto/pr45679-1 cp_lto_pr45679-1_0.o-cp_lto_pr45679-1_1.o link, -O3 -Wno-multichar -Wno-return-type
+FAIL: g++.dg/lto/pr45679-2 cp_lto_pr45679-2_0.o-cp_lto_pr45679-2_1.o link, -O3 -Wno-multichar -Wno-return-type
+FAIL: g++.dg/lto/pr48042 cp_lto_pr48042_0.o-cp_lto_pr48042_0.o link, -O0 -flto -flto-partition=1to1 -fno-use-linker-plugin
+FAIL: g++.dg/lto/pr48042 cp_lto_pr48042_0.o-cp_lto_pr48042_0.o link, -O0 -flto -flto-partition=none -fuse-linker-plugin
+FAIL: g++.dg/lto/pr48042 cp_lto_pr48042_0.o-cp_lto_pr48042_0.o link, -O0 -flto -fuse-linker-plugin -fno-fat-lto-objects
+FAIL: g++.dg/lto/pr48042 cp_lto_pr48042_0.o-cp_lto_pr48042_0.o link, -O2 -flto -flto-partition=1to1 -fno-use-linker-plugin
+FAIL: g++.dg/lto/pr48042 cp_lto_pr48042_0.o-cp_lto_pr48042_0.o link, -O2 -flto -flto-partition=none -fuse-linker-plugin -fno-fat-lto-objects
+FAIL: g++.dg/lto/pr48042 cp_lto_pr48042_0.o-cp_lto_pr48042_0.o link, -O2 -flto -fuse-linker-plugin
+FAIL: g++.dg/lto/pr48354-1 cp_lto_pr48354-1_0.o-cp_lto_pr48354-1_0.o link,  -g -flto
+FAIL: g++.dg/lto/pr54625-1 cp_lto_pr54625-1_0.o-cp_lto_pr54625-1_1.o link,  -O0 -flto -w -std=gnu17
+FAIL: g++.dg/lto/pr54625-1 cp_lto_pr54625-1_0.o-cp_lto_pr54625-1_1.o link,  -O2 -flto -w -std=gnu17
+FAIL: g++.dg/lto/pr54625-2 cp_lto_pr54625-2_0.o-cp_lto_pr54625-2_1.o link,  -O0 -flto -w -std=gnu17
+FAIL: g++.dg/lto/pr54625-2 cp_lto_pr54625-2_0.o-cp_lto_pr54625-2_1.o link,  -O2 -flto -w -std=gnu17
+FAIL: g++.dg/lto/pr60567 cp_lto_pr60567_0.o-cp_lto_pr60567_0.o link,  -flto -fno-use-linker-plugin
+FAIL: g++.dg/lto/pr65475 cp_lto_pr65475_0.o-cp_lto_pr65475_1.o link, -O2
+FAIL: g++.dg/lto/pr65475 cp_lto_pr65475_0.o-cp_lto_pr65475_1.o link, -Wno-odr
+FAIL: g++.dg/lto/pr65475b cp_lto_pr65475b_0.o-cp_lto_pr65475b_1.o link, -O2
+FAIL: g++.dg/lto/pr65475b cp_lto_pr65475b_0.o-cp_lto_pr65475b_1.o link, -Wno-odr
+FAIL: g++.dg/lto/pr65475c cp_lto_pr65475c_0.o-cp_lto_pr65475c_1.o link, -O2 -w -Wno-return-type
+FAIL: g++.dg/lto/pr68811 cp_lto_pr68811_0.o-cp_lto_pr68811_1.o link,  -O2 -w
+FAIL: g++.dg/lto/pr68811 cp_lto_pr68811_0.o-cp_lto_pr68811_1.o link,  -w
+FAIL: g++.dg/lto/pr87089 cp_lto_pr87089_0.o-cp_lto_pr87089_1.o link, -O0 -flto -flto-partition=1to1 -fno-use-linker-plugin
+FAIL: g++.dg/lto/pr87089 cp_lto_pr87089_0.o-cp_lto_pr87089_1.o link, -O0 -flto -flto-partition=none -fuse-linker-plugin
+FAIL: g++.dg/lto/pr87089 cp_lto_pr87089_0.o-cp_lto_pr87089_1.o link, -O0 -flto -fuse-linker-plugin -fno-fat-lto-objects
+FAIL: g++.dg/lto/pr87089 cp_lto_pr87089_0.o-cp_lto_pr87089_1.o link, -O2 -flto -flto-partition=1to1 -fno-use-linker-plugin
+FAIL: g++.dg/lto/pr87089 cp_lto_pr87089_0.o-cp_lto_pr87089_1.o link, -O2 -flto -flto-partition=none -fuse-linker-plugin -fno-fat-lto-objects
+FAIL: g++.dg/lto/pr87089 cp_lto_pr87089_0.o-cp_lto_pr87089_1.o link, -O2 -flto -fuse-linker-plugin
+FAIL: g++.dg/lto/pr89335 cp_lto_pr89335_0.o-cp_lto_pr89335_0.o link, -O2 -flto -Wsuggest-final-methods
+FAIL: g++.dg/modules/global-3 -std=c++17 link
+FAIL: g++.dg/modules/global-3 -std=c++2a link
+FAIL: g++.dg/modules/global-3 -std=c++2b link
+FAIL: g++.dg/modules/hello-1 -std=c++17 link
+FAIL: g++.dg/modules/hello-1 -std=c++2a link
+FAIL: g++.dg/modules/hello-1 -std=c++2b link
+FAIL: g++.dg/modules/hello-2 -std=c++17 link
+FAIL: g++.dg/modules/hello-2 -std=c++2a link
+FAIL: g++.dg/modules/hello-2 -std=c++2b link
+FAIL: g++.dg/modules/iostream-1 -std=c++17 link
+FAIL: g++.dg/modules/iostream-1 -std=c++2a link
+FAIL: g++.dg/modules/iostream-1 -std=c++2b link
+UNRESOLVED: g++.dg/modules/global-3 -std=c++17 execute
+UNRESOLVED: g++.dg/modules/global-3 -std=c++2a execute
+UNRESOLVED: g++.dg/modules/global-3 -std=c++2b execute
+UNRESOLVED: g++.dg/modules/hello-1 -std=c++17 execute
+UNRESOLVED: g++.dg/modules/hello-1 -std=c++2a execute
+UNRESOLVED: g++.dg/modules/hello-1 -std=c++2b execute
+UNRESOLVED: g++.dg/modules/hello-2 -std=c++17 execute
+UNRESOLVED: g++.dg/modules/hello-2 -std=c++2a execute
+UNRESOLVED: g++.dg/modules/hello-2 -std=c++2b execute
+UNRESOLVED: g++.dg/modules/iostream-1 -std=c++17 execute
+UNRESOLVED: g++.dg/modules/iostream-1 -std=c++2a execute
+UNRESOLVED: g++.dg/modules/iostream-1 -std=c++2b execute
+

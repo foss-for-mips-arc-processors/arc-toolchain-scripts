@@ -11,3 +11,4 @@ scripts/wrapper/sed/sed
 .DS_Store
 *.sw?
 configure~
+__pycache__/

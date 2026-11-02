@@ -43,11 +43,13 @@ autoconf
 
 ## Makefile targets
 
-| Target    | Description                                                         |
-|-----------|---------------------------------------------------------------------|
-| `all`     | Build a full toolchain with TCF scripts, aliases and nano libraries |
-| `openocd` | Build and install OpenOCD                                           |
-| `qemu`    | Build and install QEMU                                              |
+| Target            | Description                                                         |
+|-------------------|---------------------------------------------------------------------|
+| `all`             | Build a full toolchain with TCF scripts, aliases and nano libraries |
+| `report`          | Summarise DejaGnu and Picolibc test counts                          |
+| `report-filtered` | Same results with the family allowlist applied                      |
+| `openocd`         | Build and install OpenOCD                                           |
+| `qemu`            | Build and install QEMU                                              |
 
 ## Options
 

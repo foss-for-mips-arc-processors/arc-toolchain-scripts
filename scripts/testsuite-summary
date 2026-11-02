@@ -1,0 +1,116 @@
+#!/usr/bin/env python3
+
+"""Summarise DejaGnu .sum files or a Picolibc Meson test log.
+
+This is the unfiltered report. It prints the counts recorded by the test
+harness and does not apply allowlists.
+"""
+
+import os
+import re
+import sys
+
+SUMMARY_KEYS = (
+    "expected passes",
+    "unexpected failures",
+    "unexpected successes",
+    "expected failures",
+    "unresolved testcases",
+    "unsupported tests",
+    "untested testcases",
+)
+
+SUMMARY_RE = re.compile(
+    r"^# of (?P<key>" + "|".join(SUMMARY_KEYS) + r")\s+(?P<count>\d+)\s*$"
+)
+MESON_RE = re.compile(
+    r"^(?P<key>Ok|Fail|Expected Fail|Skipped|Timeout):\s+(?P<count>\d+)\s*$"
+)
+
+
+def usage():
+    print(
+        "Usage: {} <tool> <results>".format(sys.argv[0]),
+        file=sys.stderr,
+    )
+    print(
+        "       results is a comma-separated list of .sum files or a Meson test.log",
+        file=sys.stderr,
+    )
+
+
+def read_dejagnu(path):
+    counts = {key: 0 for key in SUMMARY_KEYS}
+    found = False
+    with open(path) as handle:
+        for line in handle:
+            match = SUMMARY_RE.match(line.rstrip("\n"))
+            if match:
+                counts[match.group("key")] = int(match.group("count"))
+                found = True
+    return counts, found
+
+
+def read_meson(path):
+    counts = {}
+    with open(path) as handle:
+        for line in handle:
+            match = MESON_RE.match(line.strip())
+            if match:
+                counts[match.group("key")] = int(match.group("count"))
+    return counts
+
+
+def print_counts(title, counts):
+    print(title)
+    for key, count in counts.items():
+        print("  {:<24} {:>7}".format(key, count))
+
+
+def main(argv):
+    if len(argv) != 3:
+        usage()
+        return 1
+
+    tool, results = argv[1], argv[2]
+    paths = [path for path in results.split(",") if path]
+    if not paths:
+        print("Error: no result files for {}.".format(tool), file=sys.stderr)
+        return 1
+
+    missing = [path for path in paths if not os.path.isfile(path)]
+    if missing:
+        print("Error: result file not found: {}".format(missing[0]), file=sys.stderr)
+        return 1
+
+    print("========= Summary of {} testsuite =========".format(tool))
+    if all(path.endswith("test.log") for path in paths):
+        totals = {}
+        for path in paths:
+            counts = read_meson(path)
+            if not counts:
+                print("{}: no Meson summary found".format(path))
+                return 1
+            print_counts(path, counts)
+            for key, count in counts.items():
+                totals[key] = totals.get(key, 0) + count
+        if len(paths) > 1:
+            print_counts("total", totals)
+        return 0
+
+    totals = {key: 0 for key in SUMMARY_KEYS}
+    for path in paths:
+        counts, found = read_dejagnu(path)
+        if not found:
+            print("{}: no DejaGnu summary found".format(path))
+            return 1
+        print_counts(os.path.basename(path), counts)
+        for key in SUMMARY_KEYS:
+            totals[key] += counts[key]
+    if len(paths) > 1:
+        print_counts("total", totals)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

@@ -118,6 +118,7 @@ help:
 	@echo "Configure with --target=arc|arc32|arc64|riscv32|riscv64"
 	@echo "OS: --with-os=baremetal (default) or linux (not implemented yet)"
 	@echo "libc: --with-libc=picolibc (baremetal default), newlib, or glibc (linux default)"
+	@echo "Reports: make report (counts) or make report-filtered (allowlists)"
 
 #
 # Git
@@ -822,6 +823,86 @@ check-gdb-baremetal: stamps/check-gdb-baremetal
 check-newlib-baremetal: stamps/check-newlib-baremetal
 check-picolibc-baremetal: stamps/check-picolibc-baremetal
 check-libc-baremetal: stamps/check-$(LIBC)-baremetal
+
+#
+# Reports
+#
+# report prints DejaGnu (or Meson) counts. report-filtered drops results
+# listed in the family allowlist. ARC Classic allowlists are per CPU.
+# ARC-V allowlists are matched from --with-arch / --with-abi.
+#
+
+ifeq ($(FAMILY),arc)
+ifeq ($(TARGET_CPU),arc32)
+ALLOWLIST_CPU := hs5x
+else ifeq ($(TARGET_CPU),arc64)
+ALLOWLIST_CPU := hs6x
+else
+ALLOWLIST_CPU := archs
+endif
+ifneq ($(WITH_CPU),)
+ALLOWLIST_CPU := $(patsubst --with-cpu=%,%,$(WITH_CPU))
+endif
+FILTER_SCRIPT := $(srcdir)/scripts/testsuite-filter-arc
+FILTER_BASE := $(srcdir)/test/allowlist/arc
+filter_dir = $(FILTER_BASE)/$(1)/$(ALLOWLIST_CPU)/
+FILTER_ENV :=
+else ifeq ($(FAMILY),riscv)
+FILTER_SCRIPT := $(srcdir)/scripts/testsuite-filter-riscv
+FILTER_BASE := $(srcdir)/test/allowlist/riscv
+filter_dir = $(FILTER_BASE)
+FILTER_ENV := REPORT_ARCH=$(patsubst --with-arch=%,%,$(WITH_ARCH)) REPORT_ABI=$(patsubst --with-abi=%,%,$(WITH_ABI)) REPORT_TUNE=$(patsubst --with-tune=%,%,$(WITH_TUNE))
+endif
+
+.PHONY: report report-filtered \
+	report-gcc report-binutils report-gdb report-newlib report-picolibc \
+	report-gcc-filtered report-binutils-filtered report-newlib-filtered
+
+report: report-gcc report-binutils report-gdb report-$(LIBC)
+report-filtered: report-gcc-filtered report-binutils-filtered
+ifeq ($(LIBC),newlib)
+report-filtered: report-newlib-filtered
+endif
+
+report-gcc: stamps/check-gcc-baremetal
+	sums=`find build-gcc-stage2-baremetal -name '*.sum' | paste -sd, -`; \
+	test -n "$$sums" || { echo "No gcc .sum results"; exit 1; }; \
+	$(srcdir)/scripts/testsuite-summary gcc "$$sums"
+
+report-gcc-filtered: stamps/check-gcc-baremetal
+	sums=`find build-gcc-stage2-baremetal -name '*.sum' | paste -sd, -`; \
+	test -n "$$sums" || { echo "No gcc .sum results"; exit 1; }; \
+	$(FILTER_ENV) $(FILTER_SCRIPT) gcc $(LIBC) $(call filter_dir,gcc) "$$sums"
+
+report-binutils: stamps/check-binutils-baremetal
+	sums=`find build-binutils-baremetal -name '*.sum' | paste -sd, -`; \
+	test -n "$$sums" || { echo "No binutils .sum results"; exit 1; }; \
+	$(srcdir)/scripts/testsuite-summary binutils "$$sums"
+
+report-binutils-filtered: stamps/check-binutils-baremetal
+	sums=`find build-binutils-baremetal -name '*.sum' | paste -sd, -`; \
+	test -n "$$sums" || { echo "No binutils .sum results"; exit 1; }; \
+	$(FILTER_ENV) $(FILTER_SCRIPT) binutils $(LIBC) $(call filter_dir,binutils) "$$sums"
+
+report-gdb: stamps/check-gdb-baremetal
+	sums=`find build-gdb-baremetal -name '*.sum' | paste -sd, -`; \
+	test -n "$$sums" || { echo "No gdb .sum results"; exit 1; }; \
+	$(srcdir)/scripts/testsuite-summary gdb "$$sums"
+
+report-newlib: stamps/check-newlib-baremetal
+	sums=`find build-newlib-baremetal -name '*.sum' | paste -sd, -`; \
+	test -n "$$sums" || { echo "No newlib .sum results"; exit 1; }; \
+	$(srcdir)/scripts/testsuite-summary newlib "$$sums"
+
+report-newlib-filtered: stamps/check-newlib-baremetal
+	sums=`find build-newlib-baremetal -name '*.sum' | paste -sd, -`; \
+	test -n "$$sums" || { echo "No newlib .sum results"; exit 1; }; \
+	$(FILTER_ENV) $(FILTER_SCRIPT) newlib $(LIBC) $(call filter_dir,newlib) "$$sums"
+
+report-picolibc: stamps/check-picolibc-baremetal
+	sums=`find build-picolibc-baremetal-tests -name 'test.log' | paste -sd, -`; \
+	test -n "$$sums" || { echo "No picolibc test.log results"; exit 1; }; \
+	$(srcdir)/scripts/testsuite-summary picolibc "$$sums"
 
 stamps/check-gcc-baremetal: export PATH := $(DEJAGNU_PATH)
 stamps/check-gcc-baremetal: stamps/build-gcc-stage2-baremetal $(DEJAGNU_DEPENDENCIES)
