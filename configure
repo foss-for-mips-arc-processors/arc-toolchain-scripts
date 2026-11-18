@@ -639,6 +639,7 @@ with_newlib_src
 with_gcc_src
 with_gdb_src
 with_binutils_src
+with_languages
 host_cxxflags
 host_cflags
 target_cxxflags
@@ -738,6 +739,7 @@ with_target_cflags
 with_target_cxxflags
 with_host_cflags
 with_host_cxxflags
+with_languages
 with_binutils_src
 with_gdb_src
 with_gcc_src
@@ -1417,6 +1419,7 @@ Optional Packages:
   --with-target-cxxflags  Extra C++ flags for target libraries
   --with-host-cflags      Extra C flags for host Binutils, GDB and GCC
   --with-host-cxxflags    Extra C++ flags for host Binutils, GDB and GCC
+  --with-languages=LIST   GCC --enable-languages for stage 2 [c,c++]
   --with-binutils-src     Set binutils source path, default
                           $(srcdir)/src/binutils
   --with-gdb-src          Set gdb source path, default $(srcdir)/src/gdb
@@ -4251,6 +4254,22 @@ then :
 fi
 
 host_cxxflags=$with_host_cxxflags
+
+
+
+# Check whether --with-languages was given.
+if test ${with_languages+y}
+then :
+  withval=$with_languages;
+else $as_nop
+  with_languages=c,c++
+fi
+
+if test "x$with_languages" = x
+then :
+  as_fn_error $? "--with-languages must not be empty" "$LINENO" 5
+fi
+with_languages=$with_languages
 
 
 

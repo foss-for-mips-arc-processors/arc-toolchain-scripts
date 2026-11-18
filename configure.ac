@@ -241,6 +241,15 @@ AC_ARG_WITH(host_cxxflags,
 	[])
 AC_SUBST(host_cxxflags, [$with_host_cxxflags])
 
+AC_ARG_WITH(languages,
+	[AS_HELP_STRING([--with-languages=LIST],
+		[GCC --enable-languages for stage 2 @<:@c,c++@:>@])],
+	[],
+	[with_languages=c,c++])
+AS_IF([test "x$with_languages" = x],
+	[AC_MSG_ERROR([--with-languages must not be empty])])
+AC_SUBST(with_languages, [$with_languages])
+
 AC_DEFUN([AX_ARG_WITH_SRC],
 	[{m4_pushdef([opt_name], with_$1_src)
 	  AC_ARG_WITH($1-src,

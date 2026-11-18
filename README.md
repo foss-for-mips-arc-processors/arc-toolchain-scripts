@@ -61,15 +61,16 @@ autoconf
 
 ## Shared
 
-| Option                           | Default                                   | Notes                                              |
-|----------------------------------|-------------------------------------------|----------------------------------------------------|
-| `--prefix=`                      | `/usr/local`                              | Install root                                       |
-| `--with-vendor=`                 | `gf`                                      | GNU triplet vendor field                           |
-| `--with-os=`                     | `baremetal`                               | `baremetal` or `linux` (linux not implemented yet) |
-| `--with-libc=`                   | `picolibc` if baremetal, `glibc` if linux | `picolibc` / `newlib` (baremetal), `glibc` (linux) |
-| `--enable-multilib`              | disabled                                  |                                                    |
-| `--enable-gdb` / `--disable-gdb` | enabled                                   |                                                    |
-| `--with-*-src=`                  | `src/<component>`                         | Per-component source path                          |
+| Option                           | Default                                   | Notes                                                |
+|----------------------------------|-------------------------------------------|------------------------------------------------------|
+| `--prefix=`                      | `/usr/local`                              | Install root                                         |
+| `--with-vendor=`                 | `gf`                                      | GNU triplet vendor field                             |
+| `--with-os=`                     | `baremetal`                               | `baremetal` or `linux` (linux not implemented yet)   |
+| `--with-libc=`                   | `picolibc` if baremetal, `glibc` if linux | `picolibc` / `newlib` (baremetal), `glibc` (linux)   |
+| `--enable-multilib`              | disabled                                  |                                                      |
+| `--enable-gdb` / `--disable-gdb` | enabled                                   |                                                      |
+| `--with-languages=`              | `c,c++`                                   | GCC stage 2 `--enable-languages` (stage 1 stays `c`) |
+| `--with-*-src=`                  | `src/<component>`                         | Per-component source path                            |
 
 ### ARC Classic
 
