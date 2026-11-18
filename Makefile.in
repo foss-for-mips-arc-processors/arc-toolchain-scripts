@@ -774,9 +774,9 @@ GLIB_ARCHIVE := $(srcdir)/contrib/$(GLIB_NAME).tar.xz
 GLIB_PREFIX := $(abspath install-glib)
 
 ifeq ($(FAMILY),arc)
-	QEMU_TARGETS := arc-softmmu,arc32-softmmu,arc64-softmmu
+	QEMU_TARGETS := arc-softmmu,arc32-softmmu,arc64-softmmu,arc-linux-user,arc32-linux-user,arc64-linux-user
 else ifeq ($(FAMILY),riscv)
-	QEMU_TARGETS := riscv32-softmmu,riscv64-softmmu
+	QEMU_TARGETS := riscv32-softmmu,riscv64-softmmu,riscv32-linux-user,riscv64-linux-user
 else
 	$(error Unsupported target CPU!)
 endif
@@ -810,7 +810,6 @@ stamps/build-qemu: $(QEMU_SRCDIR) stamps/build-glib
 		--enable-debug \
 		--enable-plugins \
 		--disable-docs \
-		--disable-user
 	$(MAKE) -C $(notdir $@)
 	$(MAKE) -C $(notdir $@) install
 	mkdir -p $(dir $@) && touch $@
