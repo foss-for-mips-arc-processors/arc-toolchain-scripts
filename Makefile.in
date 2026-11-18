@@ -21,7 +21,6 @@ OPENOCD_SRCDIR := @with_openocd_src@
 QEMU_SRCDIR := @with_qemu_src@
 ARCV_TCF_WRAPPER_SRCDIR := @with_arcv_tcf_wrapper_src@
 
-NEED_GCC_EXTERNAL_LIBRARIES := @NEED_GCC_EXTERNAL_LIBRARIES@
 CONFIGURE_HOST := @configure_host@
 MULTILIB_FLAGS := @multilib_flags@
 MULTILIB_LIST_FLAGS := @multilib_list_flags@
@@ -216,6 +215,104 @@ $(error Unsupported target!)
 endif
 
 #
+# GMP, MPFR, MPC and ISL (for GCC and GDB)
+#
+
+GMP_VERSION := 6.3.0
+MPFR_VERSION := 4.2.2
+MPC_VERSION := 1.3.1
+ISL_VERSION := 0.24
+
+GMP_NAME := gmp-$(GMP_VERSION)
+MPFR_NAME := mpfr-$(MPFR_VERSION)
+MPC_NAME := mpc-$(MPC_VERSION)
+ISL_NAME := isl-$(ISL_VERSION)
+
+GMP_ARCHIVE := $(srcdir)/contrib/$(GMP_NAME).tar.bz2
+MPFR_ARCHIVE := $(srcdir)/contrib/$(MPFR_NAME).tar.bz2
+MPC_ARCHIVE := $(srcdir)/contrib/$(MPC_NAME).tar.gz
+ISL_ARCHIVE := $(srcdir)/contrib/$(ISL_NAME).tar.bz2
+
+PREREQ_PREFIX := $(abspath install-prerequisites)
+PREREQ_CONFIGURE := --prefix="$(PREREQ_PREFIX)" --disable-shared --enable-static
+
+CONFIGURE_HOST_GMP := --with-gmp="$(PREREQ_PREFIX)"
+CONFIGURE_HOST_MPFR := --with-mpfr="$(PREREQ_PREFIX)"
+CONFIGURE_HOST_MPC := --with-mpc="$(PREREQ_PREFIX)"
+
+ifeq ($(FAMILY),riscv)
+CONFIGURE_HOST_ISL := --with-isl="$(PREREQ_PREFIX)"
+else
+CONFIGURE_HOST_ISL :=
+endif
+
+PREREQ_STAMPS := \
+	stamps/build-prerequisites-gmp \
+	stamps/build-prerequisites-mpfr \
+	stamps/build-prerequisites-mpc \
+	stamps/build-prerequisites-isl
+
+stamps/build-prerequisites: $(PREREQ_STAMPS)
+	mkdir -p $(dir $@) && touch $@
+
+stamps/build-prerequisites-gmp: $(GMP_ARCHIVE)
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	tar xf $< -C $(notdir $@) --strip-components=1
+	cd $(notdir $@) && ./configure \
+		$(PREREQ_CONFIGURE) \
+		CFLAGS="$(CFLAGS_FOR_HOST)" \
+		CXXFLAGS="$(CXXFLAGS_FOR_HOST)"
+	$(MAKE) -C $(notdir $@)
+	$(MAKE) -C $(notdir $@) install
+	mkdir -p $(dir $@) && touch $@
+
+stamps/build-prerequisites-mpfr: stamps/build-prerequisites-gmp $(MPFR_ARCHIVE)
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	tar xf $(MPFR_ARCHIVE) -C $(notdir $@) --strip-components=1
+	cd $(notdir $@) && ./configure \
+		$(PREREQ_CONFIGURE) \
+		--with-gmp="$(PREREQ_PREFIX)" \
+		CFLAGS="$(CFLAGS_FOR_HOST)" \
+		CXXFLAGS="$(CXXFLAGS_FOR_HOST)"
+	$(MAKE) -C $(notdir $@)
+	$(MAKE) -C $(notdir $@) install
+	mkdir -p $(dir $@) && touch $@
+
+stamps/build-prerequisites-mpc: stamps/build-prerequisites-mpfr $(MPC_ARCHIVE)
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	tar xf $(MPC_ARCHIVE) -C $(notdir $@) --strip-components=1
+	cd $(notdir $@) && ./configure \
+		$(PREREQ_CONFIGURE) \
+		--with-gmp="$(PREREQ_PREFIX)" \
+		--with-mpfr="$(PREREQ_PREFIX)" \
+		CFLAGS="$(CFLAGS_FOR_HOST)" \
+		CXXFLAGS="$(CXXFLAGS_FOR_HOST)"
+	$(MAKE) -C $(notdir $@)
+	$(MAKE) -C $(notdir $@) install
+	mkdir -p $(dir $@) && touch $@
+
+ifeq ($(FAMILY),riscv)
+stamps/build-prerequisites-isl: stamps/build-prerequisites-gmp $(ISL_ARCHIVE)
+	rm -rf $@ $(notdir $@)
+	mkdir $(notdir $@)
+	tar xf $(ISL_ARCHIVE) -C $(notdir $@) --strip-components=1
+	cd $(notdir $@) && ./configure \
+		$(PREREQ_CONFIGURE) \
+		--with-gmp-prefix="$(PREREQ_PREFIX)" \
+		CFLAGS="$(CFLAGS_FOR_HOST)" \
+		CXXFLAGS="$(CXXFLAGS_FOR_HOST)"
+	$(MAKE) -C $(notdir $@)
+	$(MAKE) -C $(notdir $@) install
+	mkdir -p $(dir $@) && touch $@
+else
+stamps/build-prerequisites-isl:
+	mkdir -p stamps/ && touch $@
+endif
+
+#
 # Binutils and GDB
 #
 
@@ -250,7 +347,7 @@ stamps/build-binutils-baremetal: $(BINUTILS_SRCDIR) stamps/check-write-permissio
 # GDB
 #
 
-stamps/build-gdb-baremetal: $(GDB_SRCDIR) stamps/check-write-permission
+stamps/build-gdb-baremetal: $(GDB_SRCDIR) stamps/build-prerequisites stamps/check-write-permission
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 	cd $(notdir $@) && $</configure \
@@ -259,6 +356,9 @@ stamps/build-gdb-baremetal: $(GDB_SRCDIR) stamps/check-write-permission
 		$(CONFIGURE_HOST) \
 		$(CONFIGURE_WERROR) \
 		$(CONFIGURE_GDB_TARGET) \
+		$(CONFIGURE_HOST_GMP) \
+		$(CONFIGURE_HOST_MPFR) \
+		$(CONFIGURE_HOST_MPC) \
 		--enable-gdb \
 		--with-python=no \
 		--disable-sim \
@@ -282,12 +382,6 @@ stamps/build-gdb-baremetal: $(GDB_SRCDIR) stamps/check-write-permission
 #
 # GCC
 #
-
-define gcc_download_prerequisites
-	if test -f $</contrib/download_prerequisites && test "@NEED_GCC_EXTERNAL_LIBRARIES@" = "true"; then \
-		cd $< && ./contrib/download_prerequisites; \
-	fi
-endef
 
 ifeq ($(FAMILY),arc)
 
@@ -359,8 +453,7 @@ CONFIGURE_GCC_COMMON := \
 	--disable-nls \
 	--disable-libatomic
 
-stamps/build-gcc-stage1-baremetal: $(GCC_SRCDIR) stamps/build-binutils-baremetal
-	$(call gcc_download_prerequisites)
+stamps/build-gcc-stage1-baremetal: $(GCC_SRCDIR) stamps/build-prerequisites stamps/build-binutils-baremetal
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 	cd $(notdir $@) && $</configure \
@@ -369,6 +462,10 @@ stamps/build-gcc-stage1-baremetal: $(GCC_SRCDIR) stamps/build-binutils-baremetal
 		$(CONFIGURE_HOST) \
 		$(CONFIGURE_WERROR) \
 		$(CONFIGURE_GCC_TARGET) \
+		$(CONFIGURE_HOST_GMP) \
+		$(CONFIGURE_HOST_MPFR) \
+		$(CONFIGURE_HOST_MPC) \
+		$(CONFIGURE_HOST_ISL) \
 		$(CONFIGURE_GCC_SYSTEM_ZLIB) \
 		$(CONFIGURE_GCC_CHECKING) \
 		$(CONFIGURE_GCC_MULTILIB) \
@@ -387,7 +484,7 @@ stamps/build-gcc-stage1-baremetal: $(GCC_SRCDIR) stamps/build-binutils-baremetal
 	$(install_aliases)
 	mkdir -p $(dir $@) && touch $@
 
-stamps/build-gcc-stage2-baremetal: $(GCC_SRCDIR) stamps/build-$(LIBC)-baremetal
+stamps/build-gcc-stage2-baremetal: $(GCC_SRCDIR) stamps/build-prerequisites stamps/build-$(LIBC)-baremetal
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 	cd $(notdir $@) && $</configure \
@@ -396,6 +493,10 @@ stamps/build-gcc-stage2-baremetal: $(GCC_SRCDIR) stamps/build-$(LIBC)-baremetal
 		$(CONFIGURE_HOST) \
 		$(CONFIGURE_WERROR) \
 		$(CONFIGURE_GCC_TARGET) \
+		$(CONFIGURE_HOST_GMP) \
+		$(CONFIGURE_HOST_MPFR) \
+		$(CONFIGURE_HOST_MPC) \
+		$(CONFIGURE_HOST_ISL) \
 		$(CONFIGURE_GCC_SYSTEM_ZLIB) \
 		$(CONFIGURE_GCC_CHECKING) \
 		$(CONFIGURE_GCC_MULTILIB) \
@@ -414,7 +515,7 @@ stamps/build-gcc-stage2-baremetal: $(GCC_SRCDIR) stamps/build-$(LIBC)-baremetal
 	$(install_aliases)
 	mkdir -p $(dir $@) && touch $@
 
-stamps/build-gcc-stage2-nano-baremetal: $(GCC_SRCDIR) stamps/build-$(LIBC)-nano-baremetal
+stamps/build-gcc-stage2-nano-baremetal: $(GCC_SRCDIR) stamps/build-prerequisites stamps/build-$(LIBC)-nano-baremetal
 	rm -rf $@ $(notdir $@)
 	mkdir $(notdir $@)
 	cd $(notdir $@) && $</configure \
@@ -423,6 +524,10 @@ stamps/build-gcc-stage2-nano-baremetal: $(GCC_SRCDIR) stamps/build-$(LIBC)-nano-
 		$(CONFIGURE_HOST) \
 		$(CONFIGURE_WERROR) \
 		$(CONFIGURE_GCC_TARGET) \
+		$(CONFIGURE_HOST_GMP) \
+		$(CONFIGURE_HOST_MPFR) \
+		$(CONFIGURE_HOST_MPC) \
+		$(CONFIGURE_HOST_ISL) \
 		$(CONFIGURE_GCC_SYSTEM_ZLIB) \
 		$(CONFIGURE_GCC_CHECKING) \
 		$(CONFIGURE_GCC_MULTILIB) \
@@ -930,7 +1035,7 @@ stamps/check-picolibc-baremetal: stamps/build-picolibc-baremetal-tests $(DEJAGNU
 	mkdir -p $(dir $@) && touch $@
 
 clean:
-	rm -rf build-* stamps autom4te.cache
+	rm -rf build-* stamps autom4te.cache install-prerequisites
 
 Makefile: $(srcdir)/Makefile.in config.status
 	CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
