@@ -22,8 +22,8 @@ load_generic_config "sim"
 # basic-sim.exp is a basic description for the standard Cygnus simulator.
 load_base_board_description "basic-sim"
 
-# This tells it which directory to look in for the simulator.
-setup_sim riscv
+# We don't use sim/<subdir>/run runners for testing.
+setup_sim general
 
 # No multilib flags are set by default.
 process_multilib_options ""
@@ -46,7 +46,6 @@ if {[info exists env(DEJAGNU_LDSCRIPT)]} {
 }
 
 # And, it can't do arguments, and doesn't have real signals.
-
 set_board_info noargs 1
 set_board_info gdb,nosignals 1
 set_board_info sim_time_limit 300

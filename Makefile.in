@@ -859,7 +859,7 @@ stamps/build-dejagnu: $(DEJAGNU_SRCDIR)
 export DEJAGNU = $(srcdir)/scripts/dejagnu/site.exp
 
 DEJAGNU_PATH := $(srcdir)/scripts/wrapper/$(WITH_SIM):$(INSTALL_DIR)/bin:$(PATH)
-DEJAGNU_TARGET_BOARD ?= $(FAMILY)-sim
+DEJAGNU_TARGET_BOARD ?= general-sim
 DEJAGNU_DEPENDENCIES := stamps/build-dejagnu
 
 ifeq ($(WITH_SIM),qemu)
