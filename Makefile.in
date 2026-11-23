@@ -128,8 +128,8 @@ GIT_URL ?= https://github.com/foss-for-mips-arc-processors
 BINUTILS_BRANCH ?= arc-2027.03
 GDB_BRANCH ?= arc-2027.03-gdb
 GCC_BRANCH ?= arc-2027.03
-NEWLIB_BRANCH ?= arc-2026.09
-PICOLIBC_BRANCH ?= arc-2026.09
+NEWLIB_BRANCH ?= arc-2027.03
+PICOLIBC_BRANCH ?= arc-2027.03
 DEJAGNU_BRANCH ?= arc-2027.03
 OPENOCD_BRANCH ?= arc-2027.03
 QEMU_BRANCH ?= arc-2027.03
@@ -433,8 +433,16 @@ endif
 CONFIGURE_GCC_SYSTEM_ZLIB := @with_system_zlib@
 CONFIGURE_GCC_CHECKING := @gcc_checking@
 
+# By default, ARC Classic is configured without --enable-initfini-array.
+# However, for compatibility with Picolibc it must be configured with
+# --enable-initfini-array explicitly.
+#
+# --enable-stdio=pure is required only for libstdc++v3. It builds
+# a simplified C++ stdio implementation. Crosstool-NG uses this option.
+#
+# --with-picolibc build GCC with specs parts baked specifically for Picolibc.
 ifeq ($(LIBC),picolibc)
-CONFIGURE_GCC_LIBC += --enable-initfini-array --with-default-libc=picolibc --enable-stdio=pure
+CONFIGURE_GCC_LIBC += --enable-initfini-array --enable-stdio=pure --with-picolibc
 endif
 
 CONFIGURE_GCC_COMMON := \
@@ -655,7 +663,7 @@ CONFIGURE_PICOLIBC_TARGET := -Dthread-local-storage=false
 endif
 
 ifeq ($(FAMILY),riscv)
-CONFIGURE_PICOLIBC_TARGET :=
+CONFIGURE_PICOLIBC_TARGET := -Dstrcmp-pair=true
 
 define PICOLIBC_OBSOLETE_MATH_BLOCK
 #if (__riscv_flen < 64) && !defined(__riscv_zdinx)
@@ -693,6 +701,8 @@ CONFIGURE_PICOLIBC := \
 	-Dfast-bufio=true \
 	-Dmb-capable=true \
 	-Dio-wchar=true \
+	-Dfast-strcmp=true \
+	-Dfast-memfuncs=true \
 	$(CONFIGURE_PICOLIBC_COMMON) \
 	$(CONFIGURE_PICOLIBC_TARGET) \
 	$(CONFIGURE_PICOLIBC_EXTRA)
@@ -712,6 +722,8 @@ CONFIGURE_PICOLIBC_NANO := \
 	-Dfast-bufio=false \
 	-Dmb-capable=false \
 	-Dio-wchar=false \
+	-Dfast-strcmp=true \
+	-Dfast-memfuncs=true \
 	$(CONFIGURE_PICOLIBC_COMMON) \
 	$(CONFIGURE_PICOLIBC_TARGET) \
 	$(CONFIGURE_PICOLIBC_EXTRA)
@@ -735,7 +747,8 @@ stamps/build-picolibc-baremetal-tests: $(PICOLIBC_SRCDIR) stamps/build-gcc-stage
 	meson setup $(notdir $@) $< \
 		--cross-file $(srcdir)/crossfiles/cross-$(TARGET_CPU)-tests.txt \
 		$(CONFIGURE_PICOLIBC) \
-		-Dtests=true
+		-Dtests=true \
+		-Dmultilib-exclude="em_mini"
 	if [ -n "$$PICOLIBC_OBSOLETE_MATH_BLOCK" ]; then \
 		echo "$$PICOLIBC_OBSOLETE_MATH_BLOCK" >> $(notdir $@)/picolibc.h; \
 	fi
