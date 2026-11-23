@@ -1,1 +1,251 @@
-arc64-elf-run
+#!/usr/bin/env python3
+"""Run an ARC ELF file on nSIM.
+
+Detects the ARC CPU from the .ARC.attributes section of the ELF file given as
+the first argument, selects the matching nSIM ISA options, and execs nsimdrv
+with all of the arguments passed through.
+
+Set NSIM_RUN_DRY=1 to print the nsimdrv command line instead of running it.
+"""
+
+import os
+import shlex
+import sys
+
+try:
+    import elftools.common.exceptions
+    import elftools.elf.elffile
+except ImportError:
+    sys.stderr.write(
+        "%s requires pyelftools.\n"
+        "Install with:\n"
+        "  pip3 install -r requirements.txt\n"
+        "or:\n"
+        "  sudo apt-get install python3-pyelftools\n" % os.path.basename(sys.argv[0])
+    )
+    sys.exit(1)
+
+NSIM_COMMON_OPTS = [
+    "-on", "nsim_isa_enable_timer_0",
+    "-on", "nsim_isa_enable_timer_1",
+    "-on", "enable_exceptions",
+    "-on", "nsim_emt",
+]
+
+nsim_opts = {
+    "arc600": [
+        "-p nsim_isa_family=a600",
+        "-p nsim_isa_core=6",
+        "-on nsim_isa_sat",
+        "-p nsim_isa_bitscan_option=0"
+    ],
+    "arc700": [
+        "-p nsim_isa_family=a700",
+        "-on nsim_isa_sat",
+        "-on nsim_isa_mpy32"
+    ],
+    "arcem": [
+        "-p nsim_isa_family=av2em",
+        "-p nsim_isa_core=3",
+        "-on nsim_isa_sat",
+        "-p nsim_isa_code_density_option=2",
+        "-p nsim_isa_mpy_option=2",
+        "-p nsim_isa_bitscan_option=0"
+    ],
+    "archs": [
+        "-p nsim_isa_family=av2hs",
+        "-p nsim_isa_core=3",
+        "-on nsim_isa_sat",
+        "-p nsim_isa_atomic_option=1",
+        "-p nsim_isa_code_density_option=2",
+        "-p nsim_isa_div_rem_option=2",
+        "-p nsim_isa_ll64_option=1",
+        "-p nsim_isa_mpy_option=2"
+    ],
+    "em": [
+        "-p nsim_isa_family=av2em",
+        "-p nsim_isa_core=3",
+        "-on nsim_isa_sat",
+        "-p nsim_isa_shift_option=0",
+        "-p nsim_isa_bitscan_option=0"
+    ],
+    "em4_fpuda": [
+        "-p nsim_isa_family=av2em",
+        "-p nsim_isa_core=3",
+        "-on nsim_isa_sat",
+        "-p nsim_isa_code_density_option=2",
+        "-p nsim_isa_div_rem_option=2",
+        "-p nsim_isa_fpuda_option=1",
+        "-p nsim_isa_fpus_option=1",
+        "-p nsim_isa_mpy_option=2"
+    ],
+    "hs": [
+        "-p nsim_isa_family=av2hs",
+        "-p nsim_isa_core=3",
+        "-on nsim_isa_sat",
+        "-p nsim_isa_atomic_option=1",
+        "-p nsim_isa_code_density_option=2"
+    ],
+    "hs34": [
+        "-p nsim_isa_family=av2hs",
+        "-p nsim_isa_core=3",
+        "-on nsim_isa_sat",
+        "-p nsim_isa_atomic_option=1",
+        "-p nsim_isa_code_density_option=2",
+        "-p nsim_isa_mpy_option=2"
+    ],
+    "hs38_linux": [
+        "-p nsim_isa_family=av2hs",
+        "-p nsim_isa_core=3",
+        "-on nsim_isa_sat",
+        "-p nsim_isa_atomic_option=1",
+        "-p nsim_isa_code_density_option=2",
+        "-p nsim_isa_div_rem_option=2",
+        "-p nsim_isa_fpud_option=1",
+        "-p nsim_isa_fpud_div_option=1",
+        "-p nsim_isa_fpus_option=1",
+        "-p nsim_isa_fpus_div_option=1",
+        "-p nsim_isa_fpu_mac_option=1",
+        "-p nsim_isa_ll64_option=1",
+        "-p nsim_isa_mpy_option=9"
+    ],
+    "hs4xd": [
+        "-p nsim_isa_family=av2hs",
+        "-p nsim_isa_core=3",
+        "-on nsim_isa_sat",
+        "-p nsim_isa_atomic_option=1",
+        "-p nsim_isa_code_density_option=2",
+        "-p nsim_isa_div_rem_option=2",
+        "-p nsim_isa_ll64_option=1",
+        "-p nsim_isa_mpy_option=9"
+    ],
+    "hs58": [
+        "-p nsim_isa_family=av3hs",
+        "-p nsim_isa_pc_size=32",
+        "-p nsim_isa_addr_size=32",
+        "-p nsim_isa_swap_option=1",
+        "-p nsim_isa_div_rem_option=2",
+        "-p nsim_isa_mpy_option=9",
+        "-p nsim_isa_unaligned_option=1",
+        "-p nsim_isa_atomic_option=1",
+        "-p nsim_isa_ll64_option=1",
+        "-p nsim_isa_fp_wide_option=1",
+        "-p nsim_isa_shift_option=0",
+        "-p nsim_isa_bitscan_option=0"
+    ],
+    "hs5x": [
+        "-p nsim_isa_family=av3hs",
+        "-p nsim_isa_pc_size=32",
+        "-p nsim_isa_addr_size=32",
+        "-p nsim_isa_swap_option=1",
+        "-p nsim_isa_div_rem_option=2",
+        "-p nsim_isa_mpy_option=9",
+        "-p nsim_isa_unaligned_option=1",
+        "-p nsim_isa_atomic_option=1",
+        "-p nsim_isa_ll64_option=1",
+        "-p nsim_isa_fp_wide_option=1",
+        "-p nsim_isa_shift_option=0",
+        "-p nsim_isa_bitscan_option=0"
+    ],
+    "hs68": [
+        "-p nsim_isa_family=arc64",
+        "-p nsim_isa_div_rem_option=2",
+        "-p nsim_isa_mpy_option=9",
+        "-p nsim_isa_mpy64=1",
+        "-p nsim_isa_div64_option=1",
+        "-p nsim_isa_has_fp=1",
+        "-p nsim_isa_fp_vec_option=1",
+        "-p nsim_isa_fp_hp_option=1",
+        "-p nsim_isa_fp_dp_option=1",
+        "-p nsim_isa_fp_div_option=1",
+        "-p nsim_isa_fp_num_regs=32",
+        "-p nsim_isa_unaligned_option=1",
+        "-p nsim_isa_atomic_option=1",
+        "-p nsim_isa_m128_option=1",
+        "-p nsim_isa_fp_wide_option=1",
+        "-p nsim_isa_shift_option=0",
+        "-p nsim_isa_bitscan_option=0"
+    ],
+    "hs6x": [
+        "-p nsim_isa_family=arc64",
+        "-p nsim_isa_div_rem_option=2",
+        "-p nsim_isa_mpy_option=9",
+        "-p nsim_isa_mpy64=1",
+        "-p nsim_isa_div64_option=1",
+        "-p nsim_isa_has_fp=1",
+        "-p nsim_isa_fp_vec_option=1",
+        "-p nsim_isa_fp_hp_option=1",
+        "-p nsim_isa_fp_dp_option=1",
+        "-p nsim_isa_fp_div_option=1",
+        "-p nsim_isa_fp_num_regs=32",
+        "-p nsim_isa_unaligned_option=1",
+        "-p nsim_isa_atomic_option=1",
+        "-p nsim_isa_m128_option=1",
+        "-p nsim_isa_fp_wide_option=1",
+        "-p nsim_isa_shift_option=0",
+        "-p nsim_isa_bitscan_option=0"
+    ]
+}
+
+
+def get_nsim_opts(cpu_name):
+    if cpu_name not in nsim_opts:
+        raise RuntimeError("unsupported CPU %r for nSIM" % cpu_name)
+    return " ".join(nsim_opts[cpu_name])
+
+
+def get_arc_cpu_name(path):
+    try:
+        f = open(path, "rb")
+    except OSError as e:
+        raise RuntimeError("cannot open %s: %s" % (path, e.strerror))
+
+    with f:
+        try:
+            elffile = elftools.elf.elffile.ELFFile(f)
+        except elftools.common.exceptions.ELFError:
+            raise RuntimeError("%s is not ELF file!" % path)
+
+        sec = elffile.get_section_by_name(".ARC.attributes")
+        if not sec:
+            raise RuntimeError(".ARC.attributes section not found")
+        data = sec.data()
+
+    for i, b in enumerate(data):
+        if b == 0x07:  # Tag_ARC_CPU_name
+            # Extract following null-terminated string
+            j = i + 1
+            while j < len(data) and data[j] != 0:
+                j += 1
+            return data[i + 1:j].decode()
+
+    raise RuntimeError("CPU name not found")
+
+
+def main(argv):
+    if len(argv) < 2:
+        sys.stderr.write("usage: %s ELF-FILE [NSIMDRV-ARGS...]\n" % os.path.basename(argv[0]))
+        return 1
+
+    try:
+        cpu_name = get_arc_cpu_name(argv[1])
+        opts = get_nsim_opts(cpu_name)
+    except RuntimeError as e:
+        sys.stderr.write("%s: %s\n" % (os.path.basename(argv[0]), e))
+        return 1
+
+    cmd = ["nsimdrv"] + NSIM_COMMON_OPTS + shlex.split(opts) + argv[1:]
+
+    if os.environ.get("NSIM_RUN_DRY"):
+        print(" ".join(shlex.quote(a) for a in cmd))
+        return 0
+
+    try:
+        os.execvp(cmd[0], cmd)
+    except OSError as e:
+        sys.stderr.write("%s: cannot execute %s: %s\n" % (os.path.basename(argv[0]), cmd[0], e.strerror))
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
