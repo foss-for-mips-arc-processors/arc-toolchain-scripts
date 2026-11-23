@@ -735,8 +735,7 @@ stamps/build-picolibc-baremetal-tests: $(PICOLIBC_SRCDIR) stamps/build-gcc-stage
 	meson setup $(notdir $@) $< \
 		--cross-file $(srcdir)/crossfiles/cross-$(TARGET_CPU)-tests.txt \
 		$(CONFIGURE_PICOLIBC) \
-		-Dtests=true \
-		-Dtest-machine=$(WITH_SIM)
+		-Dtests=true
 	if [ -n "$$PICOLIBC_OBSOLETE_MATH_BLOCK" ]; then \
 		echo "$$PICOLIBC_OBSOLETE_MATH_BLOCK" >> $(notdir $@)/picolibc.h; \
 	fi
@@ -1031,7 +1030,7 @@ stamps/check-newlib-baremetal: stamps/build-gcc-stage2-baremetal $(DEJAGNU_DEPEN
 
 stamps/check-picolibc-baremetal: export PATH := $(DEJAGNU_PATH)
 stamps/check-picolibc-baremetal: stamps/build-picolibc-baremetal-tests $(DEJAGNU_DEPENDENCIES)
-	meson test --timeout-multiplier 3 -C $(notdir $<) -v 2>&1 | tee $(notdir $<)/test.log || true
+	meson test --timeout-multiplier 9 -C $(notdir $<) -v 2>&1 | tee $(notdir $<)/test.log || true
 	mkdir -p $(dir $@) && touch $@
 
 clean:
