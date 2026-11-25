@@ -27,6 +27,7 @@ MULTILIB_GEN := @multilib_gen@
 WERROR_FLAG := @werror_flag@
 CONFIGURE_WERROR := @werror_flag@
 ENABLE_GDB := @enable_gdb@
+ENABLE_NANO := @enable_nano@
 DEBUG_INFO := @debug_info@
 WITH_CPU := @with_cpu@
 WITH_FPU := @with_fpu@
@@ -107,7 +108,11 @@ endif
 
 .PHONY: all help clean
 
+ifeq ($(ENABLE_NANO),--enable-nano)
 all: stamps/build-gcc-stage2-nano-baremetal
+else
+all: stamps/build-gcc-stage2-baremetal
+endif
 
 ifeq ($(ENABLE_GDB),--enable-gdb)
 all: stamps/build-gdb-baremetal

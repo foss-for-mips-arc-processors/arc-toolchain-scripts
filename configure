@@ -648,6 +648,7 @@ with_system_zlib
 gcc_checking
 debug_info
 werror_flag
+enable_nano
 enable_gdb
 vendor
 default_target
@@ -727,6 +728,7 @@ enable_multilib
 with_multilib_list
 with_multilib_generator
 enable_gdb
+enable_nano
 enable_werror
 enable_debug_info
 enable_gcc_checking
@@ -1378,6 +1380,8 @@ Optional Features:
   --enable-multilib       Build all configured runtime libraries
                           [--disable-multilib]
   --disable-gdb           Do not build GDB [--enable-gdb]
+  --enable-nano           Build the nano libc configuration (nano.specs)
+                          [--disable-nano]
   --enable-werror         Build with -Werror [--disable-werror]
   --enable-debug-info     Build target libraries with debug information
                           [--disable-debug-info]
@@ -4100,6 +4104,23 @@ then :
 
 else $as_nop
   enable_gdb=--disable-gdb
+
+fi
+
+# Check whether --enable-nano was given.
+if test ${enable_nano+y}
+then :
+  enableval=$enable_nano;
+else $as_nop
+  enable_nano=no
+fi
+
+if test "x$enable_nano" != xno
+then :
+  enable_nano=--enable-nano
+
+else $as_nop
+  enable_nano=--disable-nano
 
 fi
 

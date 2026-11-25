@@ -156,6 +156,15 @@ AS_IF([test "x$enable_gdb" != xno],
 	[AC_SUBST(enable_gdb, --enable-gdb)],
 	[AC_SUBST(enable_gdb, --disable-gdb)])
 
+AC_ARG_ENABLE(nano,
+	[AS_HELP_STRING([--enable-nano],
+		[Build the nano libc configuration (nano.specs) @<:@--disable-nano@:>@])],
+	[],
+	[enable_nano=no])
+AS_IF([test "x$enable_nano" != xno],
+	[AC_SUBST(enable_nano, --enable-nano)],
+	[AC_SUBST(enable_nano, --disable-nano)])
+
 AC_ARG_ENABLE(werror,
 	[AS_HELP_STRING([--enable-werror],
 		[Build with -Werror @<:@--disable-werror@:>@])],

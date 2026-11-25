@@ -43,13 +43,13 @@ autoconf
 
 ## Makefile targets
 
-| Target            | Description                                                         |
-|-------------------|---------------------------------------------------------------------|
-| `all`             | Build a full toolchain with TCF scripts, aliases and nano libraries |
-| `report`          | Summarize DejaGnu and Picolibc test counts                          |
-| `report-filtered` | Same results with the family allowlist applied                      |
-| `openocd`         | Build and install OpenOCD                                           |
-| `qemu`            | Build and install QEMU                                              |
+| Target            | Description                                                                                    |
+|-------------------|------------------------------------------------------------------------------------------------|
+| `all`             | Build a full toolchain with TCF scripts and aliases (plus nano libraries with `--enable-nano`) |
+| `report`          | Summarize DejaGnu and Picolibc test counts                                                     |
+| `report-filtered` | Same results with the family allowlist applied                                                 |
+| `openocd`         | Build and install OpenOCD                                                                      |
+| `qemu`            | Build and install QEMU                                                                         |
 
 ## Options
 
@@ -61,17 +61,18 @@ autoconf
 
 ## Shared
 
-| Option                  | Default           | Notes                            |
-|-------------------------|-------------------|----------------------------------|
-| `--prefix=`             | `/usr/local`      | Install root                     |
-| `--with-vendor=`        | `gf`              | GNU triplet vendor field         |
-| `--with-os=`            | `baremetal`       | `baremetal` or `linux`           |
-| `--with-libc=`          | `picolibc`        | `picolibc`, `newlib`             |
-| `--enable-multilib`     | disabled          |                                  |
-| `--with-multilib-list=` |                   | `reduced` or `release`           |
-| `--enable-gdb`          | enabled           |                                  |
-| `--with-languages=`     | `c,c++`           | GCC stage 2 `--enable-languages` |
-| `--with-*-src=`         | `src/<component>` | Per-component source path        |
+| Option                  | Default           | Notes                                 |
+|-------------------------|-------------------|---------------------------------------|
+| `--prefix=`             | `/usr/local`      | Install root                          |
+| `--with-vendor=`        | `gf`              | GNU triplet vendor field              |
+| `--with-os=`            | `baremetal`       | `baremetal` or `linux`                |
+| `--with-libc=`          | `picolibc`        | `picolibc`, `newlib`                  |
+| `--enable-multilib`     | disabled          |                                       |
+| `--with-multilib-list=` |                   | `reduced` or `release`                |
+| `--enable-gdb`          | enabled           |                                       |
+| `--enable-nano`         | disabled          | Also build nano libc and `nano.specs` |
+| `--with-languages=`     | `c,c++`           | GCC stage 2 `--enable-languages`      |
+| `--with-*-src=`         | `src/<component>` | Per-component source path             |
 
 ### ARC Classic
 
