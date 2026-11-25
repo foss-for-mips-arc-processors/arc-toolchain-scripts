@@ -165,6 +165,24 @@ AS_IF([test "x$enable_nano" != xno],
 	[AC_SUBST(enable_nano, --enable-nano)],
 	[AC_SUBST(enable_nano, --disable-nano)])
 
+AC_ARG_ENABLE(openocd,
+	[AS_HELP_STRING([--enable-openocd],
+		[Build OpenOCD as part of the default target @<:@--disable-openocd@:>@])],
+	[],
+	[enable_openocd=no])
+AS_IF([test "x$enable_openocd" != xno],
+	[AC_SUBST(enable_openocd, --enable-openocd)],
+	[AC_SUBST(enable_openocd, --disable-openocd)])
+
+AC_ARG_ENABLE(qemu,
+	[AS_HELP_STRING([--enable-qemu],
+		[Build QEMU as part of the default target @<:@--disable-qemu@:>@])],
+	[],
+	[enable_qemu=no])
+AS_IF([test "x$enable_qemu" != xno],
+	[AC_SUBST(enable_qemu, --enable-qemu)],
+	[AC_SUBST(enable_qemu, --disable-qemu)])
+
 AC_ARG_ENABLE(werror,
 	[AS_HELP_STRING([--enable-werror],
 		[Build with -Werror @<:@--disable-werror@:>@])],

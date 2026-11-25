@@ -648,6 +648,8 @@ with_system_zlib
 gcc_checking
 debug_info
 werror_flag
+enable_qemu
+enable_openocd
 enable_nano
 enable_gdb
 vendor
@@ -729,6 +731,8 @@ with_multilib_list
 with_multilib_generator
 enable_gdb
 enable_nano
+enable_openocd
+enable_qemu
 enable_werror
 enable_debug_info
 enable_gcc_checking
@@ -1382,6 +1386,10 @@ Optional Features:
   --disable-gdb           Do not build GDB [--enable-gdb]
   --enable-nano           Build the nano libc configuration (nano.specs)
                           [--disable-nano]
+  --enable-openocd        Build OpenOCD as part of the default target
+                          [--disable-openocd]
+  --enable-qemu           Build QEMU as part of the default target
+                          [--disable-qemu]
   --enable-werror         Build with -Werror [--disable-werror]
   --enable-debug-info     Build target libraries with debug information
                           [--disable-debug-info]
@@ -4121,6 +4129,40 @@ then :
 
 else $as_nop
   enable_nano=--disable-nano
+
+fi
+
+# Check whether --enable-openocd was given.
+if test ${enable_openocd+y}
+then :
+  enableval=$enable_openocd;
+else $as_nop
+  enable_openocd=no
+fi
+
+if test "x$enable_openocd" != xno
+then :
+  enable_openocd=--enable-openocd
+
+else $as_nop
+  enable_openocd=--disable-openocd
+
+fi
+
+# Check whether --enable-qemu was given.
+if test ${enable_qemu+y}
+then :
+  enableval=$enable_qemu;
+else $as_nop
+  enable_qemu=no
+fi
+
+if test "x$enable_qemu" != xno
+then :
+  enable_qemu=--enable-qemu
+
+else $as_nop
+  enable_qemu=--disable-qemu
 
 fi
 

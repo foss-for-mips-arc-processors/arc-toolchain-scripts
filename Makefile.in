@@ -28,6 +28,8 @@ WERROR_FLAG := @werror_flag@
 CONFIGURE_WERROR := @werror_flag@
 ENABLE_GDB := @enable_gdb@
 ENABLE_NANO := @enable_nano@
+ENABLE_OPENOCD := @enable_openocd@
+ENABLE_QEMU := @enable_qemu@
 DEBUG_INFO := @debug_info@
 WITH_CPU := @with_cpu@
 WITH_FPU := @with_fpu@
@@ -116,6 +118,14 @@ endif
 
 ifeq ($(ENABLE_GDB),--enable-gdb)
 all: stamps/build-gdb-baremetal
+endif
+
+ifeq ($(ENABLE_OPENOCD),--enable-openocd)
+all: stamps/build-openocd
+endif
+
+ifeq ($(ENABLE_QEMU),--enable-qemu)
+all: stamps/build-qemu
 endif
 
 help:

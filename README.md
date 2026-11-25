@@ -69,8 +69,10 @@ autoconf
 | `--with-libc=`          | `picolibc`        | `picolibc`, `newlib`                  |
 | `--enable-multilib`     | disabled          |                                       |
 | `--with-multilib-list=` |                   | `reduced` or `release`                |
-| `--enable-gdb`          | enabled           |                                       |
+| `--enable-gdb`          | enabled           | Build GDB                             |
 | `--enable-nano`         | disabled          | Also build nano libc and `nano.specs` |
+| `--enable-openocd`      | disabled          | Build OpenOCD                         |
+| `--enable-qemu`         | disabled          | Build QEMU                            |
 | `--with-languages=`     | `c,c++`           | GCC stage 2 `--enable-languages`      |
 | `--with-*-src=`         | `src/<component>` | Per-component source path             |
 
