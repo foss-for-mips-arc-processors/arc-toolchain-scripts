@@ -7,7 +7,6 @@ TARGET_CPU := @target_cpu@
 TARGET_TRIPLET := @target_triplet@
 TARGET_ALIAS_NAME := @target_alias_name@
 VENDOR := @vendor@
-ENDIAN := @endian@
 OS := @with_os@
 LIBC := @libc@
 
@@ -58,7 +57,7 @@ CXXFLAGS_FOR_HOST := -O2 $(CXXFLAGS_FOR_HOST_EXTRA) @host_cxxflags@
 
 # Picolibc for ARCv2 does not fully support small data
 ifeq ($(LIBC),picolibc)
-ifeq ($(TARGET_CPU),arc)
+ifneq ($(filter arc arceb,$(TARGET_CPU)),)
 CFLAGS_FOR_TARGET_NO_SDATA := -mno-sdata
 endif
 endif
@@ -115,7 +114,7 @@ all: stamps/build-gdb-baremetal
 endif
 
 help:
-	@echo "Configure with --target=arc|arc32|arc64|riscv32|riscv64"
+	@echo "Configure with --target=arc|arceb|arc32|arc64|riscv32|riscv64"
 	@echo "OS: --with-os=baremetal (default) or linux (not implemented yet)"
 	@echo "libc: --with-libc=picolibc (baremetal default), newlib, or glibc (linux default)"
 	@echo "Reports: make report (counts) or make report-filtered (allowlists)"

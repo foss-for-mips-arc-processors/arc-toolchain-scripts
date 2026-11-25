@@ -1,0 +1,22 @@
+[binaries]
+c = ['arceb-elf32-gcc', '-nostdlib', '-mno-sdata', '-fno-delayed-branch']
+cpp = ['arceb-elf32-g++', '-nostdlib', '-mno-sdata', '-fno-delayed-branch']
+ar = 'arceb-elf32-ar'
+as = 'arceb-elf32-as'
+nm = 'arceb-elf32-nm'
+strip = 'arceb-elf32-strip'
+exe_wrapper = ['env', 'arceb-elf32-run']
+
+[host_machine]
+system = 'none'
+cpu_family = 'arc'
+cpu = 'arceb'
+endian = 'big'
+
+[properties]
+skip_sanity_check = true
+has_link_defsym = true
+default_flash_addr = '0x00000000'
+default_flash_size = '4M'
+default_ram_addr   = '0x00400000'
+default_ram_size   = '4M'

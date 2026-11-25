@@ -26,8 +26,8 @@ autoconf
 ./configure --target=arc64 --prefix=$PWD/install
 
 # Classic ARC big-endian Newlib
-./configure --target=arc --with-endian=big --with-libc=newlib \
-  --with-multilib-list=release --prefix=$PWD/install
+# Tools: arceb-gf-elf-*, alias arceb-elf32-*
+./configure --target=arceb --with-libc=newlib --enable-multilib --prefix=$PWD/install
 
 # ARC-V Newlib (riscv64-gf-elf-* plus riscv64-unknown-elf-* aliases)
 ./configure --target=riscv64 --with-arch=rv64gc --with-abi=lp64d \
@@ -55,9 +55,9 @@ autoconf
 
 ### Required
 
-| Option      | Values                                        |
-|-------------|-----------------------------------------------|
-| `--target=` | `arc`, `arc32`, `arc64`, `riscv32`, `riscv64` |
+| Option      | Values                                                 |
+|-------------|--------------------------------------------------------|
+| `--target=` | `arc`, `arceb`, `arc32`, `arc64`, `riscv32`, `riscv64` |
 
 ## Shared
 
@@ -75,11 +75,10 @@ autoconf
 
 ### ARC Classic
 
-| Option           | Default  | Notes                                                     |
-|------------------|----------|-----------------------------------------------------------|
-| `--with-endian=` | `little` | `big` rewrites the CPU to `arceb` / `arc32eb` / `arc64eb` |
-| `--with-cpu=`    |          | e.g. `archs`, `hs6x`                                      |
-| `--with-fpu=`    |          | `fpus`, `fpud`                                            |
+| Option        | Default | Notes                |
+|---------------|---------|----------------------|
+| `--with-cpu=` |         | e.g. `archs`, `hs6x` |
+| `--with-fpu=` |         | `fpus`, `fpud`       |
 
 ### ARC-V
 
@@ -92,5 +91,4 @@ autoconf
 | `--with-cmodel=`             | `medlow`            |                             |
 | `--with-multilib-generator=` |                     | Implies `--enable-multilib` |
 
-RISC-V is little-endian only (`--with-endian=big` is an error). After install,
-`*-unknown-elf-*` symlinks are created unless `--with-vendor=unknown`.
+After install, `*-unknown-elf-*` symlinks are created unless `--with-vendor=unknown`.

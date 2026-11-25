@@ -621,7 +621,6 @@ target_triplet
 WITH_SIM
 target_alias_name
 triple_cpu
-endian
 multilib_gen
 multilib_list_flags
 WITH_ISA_SPEC
@@ -718,7 +717,6 @@ enable_option_checking
 with_os
 with_libc
 with_vendor
-with_endian
 with_cpu
 with_fpu
 with_arch
@@ -1394,9 +1392,6 @@ Optional Packages:
                           (linux). Default picolibc if --with-os=baremetal,
                           glibc if --with-os=linux
   --with-vendor=gf        Vendor field of the GNU triplet [gf]
-  --with-endian=little|big
-                          ARC endianness (RISC-V is little-endian only)
-                          [little]
   --with-cpu=CPU          ARC default CPU (e.g. archs, hs6x); ARC only
   --with-fpu=FPU          ARC default FPU (fpus, fpud); ARC only
   --with-arch=rv64gc      RISC-V ISA string; RISC-V only
@@ -3911,7 +3906,8 @@ fi
 
 #
 # --target selects the architecture family. It is required at build time.
-# Allowed values: arc, arc32, arc64, riscv32, riscv64.
+# Allowed values: arc, arceb, arc32, arc64, riscv32, riscv64.
+# Endianness is implied by the triplet CPU (arceb is big-endian).
 # For RISC-V this is only the CPU field of the GNU triplet; it is not
 # checked against --with-arch.
 #
@@ -3919,12 +3915,12 @@ family=
 if test "x$target_alias" != x
 then :
   case $target_alias in #(
-  arc|arc32|arc64) :
+  arc|arceb|arc32|arc64) :
     family=arc ;; #(
   riscv32|riscv64) :
     family=riscv ;; #(
   *) :
-    as_fn_error $? "--target must be arc, arc32, arc64, riscv32, or riscv64 (got: $target_alias)" "$LINENO" 5 ;;
+    as_fn_error $? "--target must be arc, arceb, arc32, arc64, riscv32, or riscv64 (got: $target_alias)" "$LINENO" 5 ;;
 esac
 fi
 
@@ -4000,22 +3996,6 @@ fi
 
 vendor=$with_vendor
 
-
-
-# Check whether --with-endian was given.
-if test ${with_endian+y}
-then :
-  withval=$with_endian;
-else $as_nop
-  with_endian=little
-fi
-
-case $with_endian in #(
-  little|big) :
-     ;; #(
-  *) :
-    as_fn_error $? "--with-endian must be little or big" "$LINENO" 5 ;;
-esac
 
 
 # Check whether --with-cpu was given.
@@ -4524,23 +4504,9 @@ then :
 else $as_nop
   with_fpu_flag=""
 fi
-	 if test "x$with_endian" = xbig
-then :
-  case $target_alias in #(
-  arc) :
-    triple_cpu=arceb ;; #(
-  arc32) :
-    triple_cpu=arc32eb ;; #(
-  arc64) :
-    triple_cpu=arc64eb ;; #(
-  *) :
-    triple_cpu=$target_alias ;;
-esac
-else $as_nop
-  triple_cpu=$target_alias
-fi
+	 triple_cpu=$target_alias
 	 case $target_alias in #(
-  arc) :
+  arc|arceb) :
     target_alias_name=${triple_cpu}-elf32 ;; #(
   *) :
     target_alias_name=${triple_cpu}-elf ;;
@@ -4560,17 +4526,13 @@ fi
 
 elif test "x$family" = xriscv
 then :
-  if test "x$with_endian" = xbig
+  if test "x$with_cpu" != x
 then :
-  as_fn_error $? "ARC-V/RISC-V toolchains are little-endian only" "$LINENO" 5
-fi
-	 if test "x$with_cpu" != x
-then :
-  as_fn_error $? "--with-cpu is only valid with --target=arc|arc32|arc64" "$LINENO" 5
+  as_fn_error $? "--with-cpu is only valid with --target=arc|arceb|arc32|arc64" "$LINENO" 5
 fi
 	 if test "x$with_fpu" != x
 then :
-  as_fn_error $? "--with-fpu is only valid with --target=arc|arc32|arc64" "$LINENO" 5
+  as_fn_error $? "--with-fpu is only valid with --target=arc|arceb|arc32|arc64" "$LINENO" 5
 fi
 	 if test "x$with_multilib_list" != x && test "x$with_multilib_generator" != x
 then :
@@ -4649,8 +4611,6 @@ with_fpu=$with_fpu_flag
 
 
 
-
-endian=$with_endian
 
 
 

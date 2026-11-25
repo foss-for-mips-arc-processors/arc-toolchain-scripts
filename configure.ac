@@ -42,16 +42,17 @@ AC_SUBST(FETCHER)
 
 #
 # --target selects the architecture family. It is required at build time.
-# Allowed values: arc, arc32, arc64, riscv32, riscv64.
+# Allowed values: arc, arceb, arc32, arc64, riscv32, riscv64.
+# Endianness is implied by the triplet CPU (arceb is big-endian).
 # For RISC-V this is only the CPU field of the GNU triplet; it is not
 # checked against --with-arch.
 #
 family=
 AS_IF([test "x$target_alias" != x],
 	[AS_CASE([$target_alias],
-		[arc|arc32|arc64], [family=arc],
+		[arc|arceb|arc32|arc64], [family=arc],
 		[riscv32|riscv64], [family=riscv],
-		[AC_MSG_ERROR([--target must be arc, arc32, arc64, riscv32, or riscv64 (got: $target_alias)])])])
+		[AC_MSG_ERROR([--target must be arc, arceb, arc32, arc64, riscv32, or riscv64 (got: $target_alias)])])])
 AC_SUBST(family)
 AC_SUBST(target_cpu, [$target_alias])
 
@@ -91,15 +92,6 @@ AC_ARG_WITH(vendor,
 	[],
 	[with_vendor=gf])
 AC_SUBST(vendor, [$with_vendor])
-
-AC_ARG_WITH(endian,
-	[AS_HELP_STRING([--with-endian=little|big],
-		[ARC endianness (RISC-V is little-endian only) @<:@little@:>@])],
-	[],
-	[with_endian=little])
-AS_CASE([$with_endian],
-	[little|big], [],
-	[AC_MSG_ERROR([--with-endian must be little or big])])
 
 AC_ARG_WITH(cpu,
 	[AS_HELP_STRING([--with-cpu=CPU],
@@ -321,15 +313,9 @@ AS_IF([test "x$family" = xarc],
 	 AS_IF([test "x$with_fpu" != x],
 		[with_fpu_flag="--with-fpu=$with_fpu"],
 		[with_fpu_flag=""])
-	 AS_IF([test "x$with_endian" = xbig],
-		[AS_CASE([$target_alias],
-			[arc], [triple_cpu=arceb],
-			[arc32], [triple_cpu=arc32eb],
-			[arc64], [triple_cpu=arc64eb],
-			[triple_cpu=$target_alias])],
-		[triple_cpu=$target_alias])
+	 triple_cpu=$target_alias
 	 AS_CASE([$target_alias],
-		[arc], [target_alias_name=${triple_cpu}-elf32],
+		[arc|arceb], [target_alias_name=${triple_cpu}-elf32],
 		[target_alias_name=${triple_cpu}-elf])
 	 AS_IF([test "x$with_multilib_list" != x],
 		[multilib_list_flags="--with-multilib-list=$with_multilib_list"
@@ -342,12 +328,10 @@ AS_IF([test "x$family" = xarc],
 	 multilib_gen=
 	],
       [test "x$family" = xriscv],
-	[AS_IF([test "x$with_endian" = xbig],
-		[AC_MSG_ERROR([ARC-V/RISC-V toolchains are little-endian only])])
-	 AS_IF([test "x$with_cpu" != x],
-		[AC_MSG_ERROR([--with-cpu is only valid with --target=arc|arc32|arc64])])
+	[AS_IF([test "x$with_cpu" != x],
+		[AC_MSG_ERROR([--with-cpu is only valid with --target=arc|arceb|arc32|arc64])])
 	 AS_IF([test "x$with_fpu" != x],
-		[AC_MSG_ERROR([--with-fpu is only valid with --target=arc|arc32|arc64])])
+		[AC_MSG_ERROR([--with-fpu is only valid with --target=arc|arceb|arc32|arc64])])
 	 AS_IF([test "x$with_multilib_list" != x && test "x$with_multilib_generator" != x],
 		[AC_MSG_ERROR([--with-multilib-list and --with-multilib-generator are mutually exclusive])])
 	 AS_IF([test "x$with_multilib_list" != x],
@@ -393,7 +377,6 @@ AC_SUBST(WITH_TUNE)
 AC_SUBST(WITH_ISA_SPEC)
 AC_SUBST(multilib_list_flags)
 AC_SUBST(multilib_gen)
-AC_SUBST(endian, [$with_endian])
 AC_SUBST(triple_cpu)
 AC_SUBST(target_alias_name)
 AC_SUBST(WITH_SIM, $with_sim)
