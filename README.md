@@ -43,13 +43,36 @@ autoconf
 
 ## Makefile targets
 
-| Target            | Description                                                                                    |
-|-------------------|------------------------------------------------------------------------------------------------|
-| `all`             | Build a full toolchain with TCF scripts and aliases (plus nano libraries with `--enable-nano`) |
-| `report`          | Summarize DejaGnu and Picolibc test counts                                                     |
-| `report-filtered` | Same results with the family allowlist applied                                                 |
-| `openocd`         | Build and install OpenOCD                                                                      |
-| `qemu`            | Build and install QEMU                                                                         |
+| Target                     | Description                                                              |
+|----------------------------|--------------------------------------------------------------------------|
+| `all`                      | Build a full toolchain with TCF scripts and aliases                      |
+| `check-gcc-baremetal`      | Run the GCC DejaGnu testsuite                                            |
+| `check-binutils-baremetal` | Run the binutils, gas and ld testsuites                                  |
+| `check-gdb-baremetal`      | Run the GDB testsuite                                                    |
+| `check-newlib-baremetal`   | Run the Newlib testsuite                                                 |
+| `check-picolibc-baremetal` | Run the Picolibc tests                                                   |
+| `check-libc-baremetal`     | Run the check for the configured `--with-libc=` (`newlib` or `picolibc`) |
+| `report`                   | Summarize DejaGnu and Picolibc test counts                               |
+| `report-filtered`          | Same results with the family allowlist applied                           |
+| `openocd`                  | Build and install OpenOCD                                                |
+| `qemu`                     | Build and install QEMU                                                   |
+
+### Testing
+
+The `check-*` targets build the toolchain pieces they need, then run the
+testsuite on the simulator chosen with `--with-sim=nsim|qemu` (default `nsim`).
+Selecting `qemu` also builds QEMU. DejaGnu is built automatically.
+
+- A failing testsuite does not make the target fail. The target is recorded as
+  done in `stamps/`, so a repeat run does nothing until you remove the stamp
+  (for example `rm stamps/check-gcc-baremetal`) or run `make clean`.
+- Results are written to the `.sum` and `.log` files in the matching
+  `build-*-baremetal` directory (Picolibc: `build-picolibc-baremetal-tests/test.log`).
+- `report` and `report-filtered` run the matching `check-*` targets first and
+  then print the counts. `report` covers gcc, binutils, gdb and the configured libc.
+  `report-filtered` covers gcc, binutils and, for `newlib`, newlib.
+- Pass extra DejaGnu arguments with `make check-gcc-baremetal RUNTESTFLAGS="dg.exp=<test>.c"`.
+  The board defaults to `general-sim` and can be changed with `DEJAGNU_TARGET_BOARD=`.
 
 ## Options
 
