@@ -1407,8 +1407,8 @@ Optional Packages:
                           RISC-V ISA spec (2.2, 20190608, 20191213); RISC-V
                           only [20191213]
   --with-multilib-list=LIST
-                          Classic ARC GCC multilib list (reduced, release);
-                          --target=arc only
+                          GCC multilib list (reduced, release); implies
+                          --enable-multilib
   --with-multilib-generator=GEN
                           RISC-V bare-metal multilib generator string; implies
                           --enable-multilib
@@ -4547,15 +4547,8 @@ fi
 esac
 	 if test "x$with_multilib_list" != x
 then :
-  if test "x$target_alias" = xarc
-then :
   multilib_list_flags="--with-multilib-list=$with_multilib_list"
-			 enable_multilib=yes
-else $as_nop
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: --with-multilib-list is only supported for --target=arc, ignoring" >&5
-printf "%s\n" "$as_me: WARNING: --with-multilib-list is only supported for --target=arc, ignoring" >&2;}
-			 multilib_list_flags=""
-fi
+		 enable_multilib=yes
 else $as_nop
   multilib_list_flags=""
 fi
@@ -4579,9 +4572,16 @@ fi
 then :
   as_fn_error $? "--with-fpu is only valid with --target=arc|arc32|arc64" "$LINENO" 5
 fi
+	 if test "x$with_multilib_list" != x && test "x$with_multilib_generator" != x
+then :
+  as_fn_error $? "--with-multilib-list and --with-multilib-generator are mutually exclusive" "$LINENO" 5
+fi
 	 if test "x$with_multilib_list" != x
 then :
-  as_fn_error $? "--with-multilib-list is only valid with --target=arc" "$LINENO" 5
+  multilib_list_flags="--with-multilib-list=$with_multilib_list"
+		 enable_multilib=yes
+else $as_nop
+  multilib_list_flags=""
 fi
 	 with_cpu_flag=
 	 with_fpu_flag=
@@ -4637,7 +4637,6 @@ then :
 else $as_nop
   multilib_gen=
 fi
-	 multilib_list_flags=
 
 fi
 

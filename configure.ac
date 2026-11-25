@@ -145,7 +145,7 @@ AC_ARG_ENABLE(multilib,
 
 AC_ARG_WITH(multilib-list,
 	[AS_HELP_STRING([--with-multilib-list=LIST],
-		[Classic ARC GCC multilib list (reduced, release); --target=arc only])],
+		[GCC multilib list (reduced, release); implies --enable-multilib])],
 	[],
 	[with_multilib_list=])
 
@@ -332,11 +332,8 @@ AS_IF([test "x$family" = xarc],
 		[arc], [target_alias_name=${triple_cpu}-elf32],
 		[target_alias_name=${triple_cpu}-elf])
 	 AS_IF([test "x$with_multilib_list" != x],
-		[AS_IF([test "x$target_alias" = xarc],
-			[multilib_list_flags="--with-multilib-list=$with_multilib_list"
-			 enable_multilib=yes],
-			[AC_MSG_WARN([--with-multilib-list is only supported for --target=arc, ignoring])
-			 multilib_list_flags=""])],
+		[multilib_list_flags="--with-multilib-list=$with_multilib_list"
+		 enable_multilib=yes],
 		[multilib_list_flags=""])
 	 WITH_ARCH=
 	 WITH_ABI=
@@ -351,8 +348,12 @@ AS_IF([test "x$family" = xarc],
 		[AC_MSG_ERROR([--with-cpu is only valid with --target=arc|arc32|arc64])])
 	 AS_IF([test "x$with_fpu" != x],
 		[AC_MSG_ERROR([--with-fpu is only valid with --target=arc|arc32|arc64])])
+	 AS_IF([test "x$with_multilib_list" != x && test "x$with_multilib_generator" != x],
+		[AC_MSG_ERROR([--with-multilib-list and --with-multilib-generator are mutually exclusive])])
 	 AS_IF([test "x$with_multilib_list" != x],
-		[AC_MSG_ERROR([--with-multilib-list is only valid with --target=arc])])
+		[multilib_list_flags="--with-multilib-list=$with_multilib_list"
+		 enable_multilib=yes],
+		[multilib_list_flags=""])
 	 with_cpu_flag=
 	 with_fpu_flag=
 	 triple_cpu=$target_alias
@@ -382,7 +383,6 @@ AS_IF([test "x$family" = xarc],
 		[enable_multilib=yes
 		 multilib_gen=$with_multilib_generator],
 		[multilib_gen=])
-	 multilib_list_flags=
 	])
 
 AC_SUBST(with_cpu, [$with_cpu_flag])
