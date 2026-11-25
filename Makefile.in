@@ -38,7 +38,7 @@ WITH_ABI := @WITH_ABI@
 WITH_TUNE := @WITH_TUNE@
 WITH_ISA_SPEC := @WITH_ISA_SPEC@
 CMODEL := @cmodel@
-WITH_SIM := @WITH_SIM@
+WITH_SIM ?= @WITH_SIM@
 CONFIGURE_GCC_LANGUAGES := @with_languages@
 
 SHELL := /bin/sh
@@ -885,7 +885,15 @@ stamps/build-dejagnu: $(DEJAGNU_SRCDIR)
 export DEJAGNU = $(srcdir)/scripts/dejagnu/site.exp
 
 DEJAGNU_PATH := $(srcdir)/scripts/wrapper/$(WITH_SIM):$(INSTALL_DIR)/bin:$(PATH)
-DEJAGNU_TARGET_BOARD ?= general-sim
+DEJAGNU_BOARD_NAME ?= general-sim
+# Optional multilib flags appended to the board name as /FLAG/FLAG...
+# (e.g. -march=rv32imac/-mabi=ilp32) to form a --target_board= value.
+DEJAGNU_BOARD_MULTILIB ?=
+ifeq ($(strip $(DEJAGNU_BOARD_MULTILIB)),)
+DEJAGNU_BOARD := $(DEJAGNU_BOARD_NAME)
+else
+DEJAGNU_BOARD := $(DEJAGNU_BOARD_NAME)/$(strip $(DEJAGNU_BOARD_MULTILIB))
+endif
 DEJAGNU_DEPENDENCIES := stamps/build-dejagnu
 
 ifeq ($(WITH_SIM),qemu)
@@ -906,7 +914,7 @@ ifeq ($(FAMILY),arc)
 		export DEJAGNU_CFLAGS = $(CFLAGS_FOR_TARGET_NO_SDATA)
 		export DEJAGNU_LDFLAGS = \
 			-specs=picolibcpp.specs \
-			--crt0=semihost-trap \
+			--crt0=semihost \
 			--oslib=semihost \
 			-Wl,--no-warn-rwx-segments
 	else
@@ -1037,22 +1045,22 @@ report-picolibc: stamps/check-picolibc-baremetal
 
 stamps/check-gcc-baremetal: export PATH := $(DEJAGNU_PATH)
 stamps/check-gcc-baremetal: stamps/build-gcc-stage2-baremetal $(DEJAGNU_DEPENDENCIES)
-	$(MAKE) -C build-gcc-stage2-baremetal check-gcc "RUNTESTFLAGS=$(RUNTESTFLAGS) --target_board='$(DEJAGNU_TARGET_BOARD)'" || true
+	$(MAKE) -C build-gcc-stage2-baremetal check-gcc "RUNTESTFLAGS=$(RUNTESTFLAGS) --target_board='$(DEJAGNU_BOARD)'" || true
 	mkdir -p $(dir $@) && touch $@
 
 stamps/check-binutils-baremetal: export PATH := $(DEJAGNU_PATH)
 stamps/check-binutils-baremetal: stamps/build-gcc-stage2-baremetal $(DEJAGNU_DEPENDENCIES)
-	$(MAKE) -C build-binutils-baremetal check-binutils check-gas check-ld -k "RUNTESTFLAGS=$(RUNTESTFLAGS) --target_board='$(DEJAGNU_TARGET_BOARD)'" || true
+	$(MAKE) -C build-binutils-baremetal check-binutils check-gas check-ld -k "RUNTESTFLAGS=$(RUNTESTFLAGS) --target_board='$(DEJAGNU_BOARD)'" || true
 	mkdir -p $(dir $@) && touch $@
 
 stamps/check-gdb-baremetal: export PATH := $(DEJAGNU_PATH)
 stamps/check-gdb-baremetal: stamps/build-gcc-stage2-baremetal stamps/build-gdb-baremetal $(DEJAGNU_DEPENDENCIES)
-	$(MAKE) -C build-gdb-baremetal check-gdb "RUNTESTFLAGS=$(RUNTESTFLAGS) --target_board='$(DEJAGNU_TARGET_BOARD)'" || true
+	$(MAKE) -C build-gdb-baremetal check-gdb "RUNTESTFLAGS=$(RUNTESTFLAGS) --target_board='$(DEJAGNU_BOARD)'" || true
 	mkdir -p $(dir $@) && touch $@
 
 stamps/check-newlib-baremetal: export PATH := $(DEJAGNU_PATH)
 stamps/check-newlib-baremetal: stamps/build-gcc-stage2-baremetal $(DEJAGNU_DEPENDENCIES)
-	$(MAKE) -C build-newlib-baremetal check -k "RUNTESTFLAGS=$(RUNTESTFLAGS) --target_board='$(DEJAGNU_TARGET_BOARD)'" || true
+	$(MAKE) -C build-newlib-baremetal check -k "RUNTESTFLAGS=$(RUNTESTFLAGS) --target_board='$(DEJAGNU_BOARD)'" || true
 	mkdir -p $(dir $@) && touch $@
 
 stamps/check-picolibc-baremetal: export PATH := $(DEJAGNU_PATH)

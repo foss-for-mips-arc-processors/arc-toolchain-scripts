@@ -72,7 +72,19 @@ Selecting `qemu` also builds QEMU. DejaGnu is built automatically.
   then print the counts. `report` covers gcc, binutils, gdb and the configured libc.
   `report-filtered` covers gcc, binutils and, for `newlib`, newlib.
 - Pass extra DejaGnu arguments with `make check-gcc-baremetal RUNTESTFLAGS="dg.exp=<test>.c"`.
-  The board defaults to `general-sim` and can be changed with `DEJAGNU_TARGET_BOARD=`.
+  The board is `DEJAGNU_BOARD_NAME` (default `general-sim`). The optional
+  `DEJAGNU_BOARD_MULTILIB` is appended as `/<value>` to form the
+  `--target_board=` value, for example
+  `make check-gcc-baremetal DEJAGNU_BOARD_MULTILIB=-march=rv32imac/-mabi=ilp32`
+  runs on `general-sim/-march=rv32imac/-mabi=ilp32`. Flags are separated by `/`.
+
+For example, this is how I am going to test HS5x from a multilib ARCv3 toolchain:
+
+```bash
+./configure --target=arc64 --enable-multilib --disable-gdb --disable-nano --with-languages=c --with-sim=nsim --prefix=$PWD/install
+make -j 4
+make check-gcc-baremetal RUNTESTFLAGS=arc64.exp DEJAGNU_BOARD_MULTILIB=-mcpu=hs5x
+```
 
 ## Options
 
@@ -84,20 +96,21 @@ Selecting `qemu` also builds QEMU. DejaGnu is built automatically.
 
 ## Shared
 
-| Option                  | Default           | Notes                                 |
-|-------------------------|-------------------|---------------------------------------|
-| `--prefix=`             | `/usr/local`      | Install root                          |
-| `--with-vendor=`        | `gf`              | GNU triplet vendor field              |
-| `--with-os=`            | `baremetal`       | `baremetal` or `linux`                |
-| `--with-libc=`          | `picolibc`        | `picolibc`, `newlib`                  |
-| `--enable-multilib`     | disabled          |                                       |
-| `--with-multilib-list=` |                   | `reduced` or `release`                |
-| `--enable-gdb`          | enabled           | Build GDB                             |
-| `--enable-nano`         | disabled          | Also build nano libc and `nano.specs` |
-| `--enable-openocd`      | disabled          | Build OpenOCD                         |
-| `--enable-qemu`         | disabled          | Build QEMU                            |
-| `--with-languages=`     | `c,c++`           | GCC stage 2 `--enable-languages`      |
-| `--with-*-src=`         | `src/<component>` | Per-component source path             |
+| Option                                   | Default           | Notes                                         |
+|------------------------------------------|-------------------|-----------------------------------------------|
+| `--prefix=`                              | `/usr/local`      | Install root                                  |
+| `--with-vendor=`                         | `gf`              | GNU triplet vendor field                      |
+| `--with-os={baremetal,linux}`            | `baremetal`       |                                               |
+| `--with-libc={picolibc,newlib}`          | `picolibc`        |                                               |
+| `--enable-multilib`                      | disabled          |                                               |
+| `--with-multilib-list={reduced,release}` | disabled          |                                               |
+| `--enable-gdb`                           | enabled           | Build GDB                                     |
+| `--enable-nano`                          | disabled          | Build nano libc                               |
+| `--enable-openocd`                       | disabled          | Build OpenOCD                                 |
+| `--enable-qemu`                          | disabled          | Build QEMU                                    |
+| `--with-languages=`                      | `c,c++`           | GCC stage 2 `--enable-languages`              |
+| `--with-*-src=`                          | `src/<component>` | Per-component source path                     |
+| `--with-sim={nsim,qemu}`                 | `nsim`            | Use a chosen simulator for testing by default |
 
 ### ARC Classic
 
